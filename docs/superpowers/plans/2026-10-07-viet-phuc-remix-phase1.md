@@ -82,12 +82,12 @@
 - Create: `tests/RemixControls.test.tsx`
 
 **Steps:**
-- [ ] Viết test kiểm tra tương tác click vào tuỳ chọn trong `RemixControls` sẽ gọi được hàm update state của Store.
-- [ ] Chạy test (Red).
-- [ ] Implement `ColorPicker.tsx` và `RemixControls.tsx` với giao diện nút bấm (Tailwind styled buttons).
-- [ ] Chạy test (Green).
-- [ ] Refactor UI đảm bảo spacing chuẩn Editorial, font Serif.
-- [ ] Commit "Task 4: Remix UI Controls".
+- [x] Viết test kiểm tra tương tác click vào tuỳ chọn trong `RemixControls` sẽ gọi được hàm update state của Store.
+- [x] Chạy test (Red).
+- [x] Implement `ColorPicker.tsx` và `RemixControls.tsx` với giao diện nút bấm (Tailwind styled buttons).
+- [x] Chạy test (Green).
+- [x] Refactor UI đảm bảo spacing chuẩn Editorial, font Serif.
+- [x] Commit "Task 4: Remix UI Controls".
 
 ### Task 5: Main Page Assembly
 
