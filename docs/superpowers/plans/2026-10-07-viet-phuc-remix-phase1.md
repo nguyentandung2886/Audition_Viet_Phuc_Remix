@@ -34,13 +34,13 @@
 - Create: `tests/setup.test.tsx`
 
 **Steps:**
-- [ ] Khởi tạo Next.js App (`npx create-next-app@latest . --typescript --tailwind --eslint --app --use-npm --yes`).
-- [ ] Cài đặt Jest & React Testing Library.
-- [ ] Viết test `tests/setup.test.tsx` để xác minh môi trường test chạy thành công.
-- [ ] Chạy test (đảm bảo môi trường Test Runner hoạt động).
-- [ ] Cấu hình `tailwind.config.ts` với các Design Tokens (ivory, charcoal, muted red, deep green) và set CSS biến môi trường trong `globals.css`.
-- [ ] Viết một trang test tạm để verify Tailwind classes và test lại (Green).
-- [ ] Commit "Task 1: Project setup and design tokens".
+- [x] Khởi tạo Next.js App (`npx create-next-app@latest . --typescript --tailwind --eslint --app --use-npm --yes`).
+- [x] Cài đặt Jest & React Testing Library.
+- [x] Viết test `tests/setup.test.tsx` để xác minh môi trường test chạy thành công.
+- [x] Chạy test (đảm bảo môi trường Test Runner hoạt động).
+- [x] Cấu hình `tailwind.config.ts` với các Design Tokens (ivory, charcoal, muted red, deep green) và set CSS biến môi trường trong `globals.css`.
+- [x] Viết một trang test tạm để verify Tailwind classes và test lại (Green).
+- [x] Commit "Task 1: Project setup and design tokens".
 
 ### Task 2: Outfit Data Model and State Management
 
