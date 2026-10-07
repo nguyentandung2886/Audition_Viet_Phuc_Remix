@@ -67,12 +67,12 @@
 - Create: `tests/OutfitPreview.test.tsx`
 
 **Steps:**
-- [ ] Viết test `OutfitPreview.test.tsx` đảm bảo Component nhận state từ Store và render các khối placeholder có style `mix-blend-mode: multiply` với màu chỉ định.
-- [ ] Chạy test (Red).
-- [ ] Implement `OutfitPreview.tsx`. Sử dụng các thẻ `div` xám giả lập (grayscale placeholders) xếp đè (absolute layout), phủ một lớp `<div className="mix-blend-multiply">` với backgroundColor từ state.
-- [ ] Chạy test (Green).
-- [ ] Refactor component cho đẹp và responsive (Premium styling).
-- [ ] Commit "Task 3: Grayscale Silhouette Component".
+- [x] Viết test `OutfitPreview.test.tsx` đảm bảo Component nhận state từ Store và render các khối placeholder có style `mix-blend-mode: multiply` với màu chỉ định.
+- [x] Chạy test (Red).
+- [x] Implement `OutfitPreview.tsx`. Sử dụng các thẻ `div` xám giả lập (grayscale placeholders) xếp đè (absolute layout), phủ một lớp `<div className="mix-blend-multiply">` với backgroundColor từ state.
+- [x] Chạy test (Green).
+- [x] Refactor component cho đẹp và responsive (Premium styling).
+- [x] Commit "Task 3: Grayscale Silhouette Component".
 
 ### Task 4: Remix Studio UI Controls
 
