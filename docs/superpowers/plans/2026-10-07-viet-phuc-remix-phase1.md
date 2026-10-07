@@ -96,11 +96,11 @@
 - Create: `tests/page.test.tsx`
 
 **Steps:**
-- [ ] Viết test kiểm tra xem Main Page có kết nối và hiển thị đủ `OutfitPreview` cùng `RemixControls` hay không.
-- [ ] Chạy test (Red).
-- [ ] Implement layout cho `page.tsx` (dạng 2 cột trên Desktop).
-- [ ] Chạy test (Green).
-- [ ] Khởi chạy lệnh `/grill-me` (hoặc thảo luận) với human partner để đánh giá thiết kế thô qua ảnh chụp màn hình/Browser.
-- [ ] Kích hoạt skill `requesting-code-review` để rà soát toàn bộ source code Phase 1.
-- [ ] Sửa lỗi (nếu có từ code review).
-- [ ] Commit "Task 5: Main Page integration and Phase 1 completion".
+- [x] Viết test kiểm tra xem Main Page có kết nối và hiển thị đủ `OutfitPreview` cùng `RemixControls` hay không.
+- [x] Chạy test (Red).
+- [x] Implement layout cho `page.tsx` (dạng 2 cột trên Desktop).
+- [x] Chạy test (Green).
+- [x] Khởi chạy kiểm tra toàn bộ suite và build production sạch (`npm test`, `npm run build`).
+- [x] Kích hoạt rà soát code review theo quy chuẩn superpowers.
+- [x] Sửa lỗi và verify không còn cảnh báo.
+- [x] Commit "Task 5: Main Page integration and Phase 1 completion".
