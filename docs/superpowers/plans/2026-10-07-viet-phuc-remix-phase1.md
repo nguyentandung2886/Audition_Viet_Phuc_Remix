@@ -51,14 +51,14 @@
 - Create: `tests/store.test.ts`
 
 **Steps:**
-- [ ] Viết tests cho schema dữ liệu và các hành động thay đổi state trong `useOutfitStore` (VD: chọn trang phục, đổi màu).
-- [ ] Chạy tests (Red).
-- [ ] Cài đặt thư viện `zustand`.
-- [ ] Implement `src/types/outfit.ts` (Interface) và mock data `src/data/outfits.ts`.
-- [ ] Implement `src/store/useOutfitStore.ts` bằng Zustand để pass qua các tests.
-- [ ] Chạy tests (Green).
-- [ ] Refactor code nếu cần.
-- [ ] Commit "Task 2: State management and mock data".
+- [x] Viết tests cho schema dữ liệu và các hành động thay đổi state trong `useOutfitStore` (VD: chọn trang phục, đổi màu).
+- [x] Chạy tests (Red).
+- [x] Cài đặt thư viện `zustand`.
+- [x] Implement `src/types/outfit.ts` (Interface) và mock data `src/data/outfits.ts`.
+- [x] Implement `src/store/useOutfitStore.ts` bằng Zustand để pass qua các tests.
+- [x] Chạy tests (Green).
+- [x] Refactor code nếu cần.
+- [x] Commit "Task 2: State management and mock data".
 
 ### Task 3: Grayscale Silhouette Component (Outfit Preview)
 

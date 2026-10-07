@@ -1,0 +1,135 @@
+import { Outfit } from '../types/outfit';
+
+export const TRADITIONAL_PALETTE = [
+  { name: 'Đỏ Son', hex: '#A62B2B' },
+  { name: 'Xanh Lục', hex: '#1E4D3E' },
+  { name: 'Vàng Kim', hex: '#C69214' },
+  { name: 'Xanh Chàm', hex: '#264653' },
+  { name: 'Tím Huế', hex: '#582C4D' },
+  { name: 'Trắng Ngà', hex: '#F9F6F0' },
+  { name: 'Than Chì', hex: '#1C1F1E' },
+  { name: 'Hồng Đào', hex: '#B85D6E' },
+];
+
+const DEFAULT_HEX_PALETTE = TRADITIONAL_PALETTE.map((c) => c.hex);
+
+export const OUTFITS_DATA: Outfit[] = [
+  {
+    id: 'nhat-binh-trieu-nguyen',
+    name: 'Áo Nhật Bình',
+    dynasty: 'Triều Nguyễn (1802 - 1945)',
+    gender: 'nu',
+    description: 'Thường phục của bậc Hoàng hậu, Phi tần, Công chúa và mệnh phụ quý tộc triều Nguyễn.',
+    historicalFact: 'Tên gọi Nhật Bình bắt nguồn từ dạng cổ áo xẻ chữ nhật ở trước ngực. Viền cổ và tay áo viền ngũ sắc rực rỡ.',
+    layers: [
+      {
+        id: 'robe',
+        name: 'Thân Áo Ngoài',
+        defaultColor: '#A62B2B',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 2,
+        shape: 'robe',
+      },
+      {
+        id: 'collar',
+        name: 'Viền Cổ Nhật Bình',
+        defaultColor: '#C69214',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 4,
+        shape: 'collar',
+      },
+      {
+        id: 'belt',
+        name: 'Đai Buộc Lưng',
+        defaultColor: '#1E4D3E',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 5,
+        shape: 'belt',
+      },
+      {
+        id: 'skirt',
+        name: 'Quần / Váy Bên Trong',
+        defaultColor: '#F9F6F0',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 1,
+        shape: 'skirt',
+      },
+    ],
+  },
+  {
+    id: 'ao-tac-trieu-nguyen',
+    name: 'Áo Tấc (Áo Tay Thụng)',
+    dynasty: 'Triều Nguyễn (1802 - 1945)',
+    gender: 'unisex',
+    description: 'Lễ phục trang trọng của mọi tầng lớp từ vua chúa đến thứ dân trong các nghi lễ gia tiên, hội làng.',
+    historicalFact: 'Tay áo thụng dài và rộng khoảng 1 tấc tây (40cm). Thường đi kèm với khăn vấn truyền thống.',
+    layers: [
+      {
+        id: 'robe',
+        name: 'Thân Áo Tay Thụng',
+        defaultColor: '#264653',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 2,
+        shape: 'robe',
+      },
+      {
+        id: 'hat',
+        name: 'Khăn Vấn (Khăn Đóng)',
+        defaultColor: '#1C1F1E',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 5,
+        shape: 'hat',
+      },
+      {
+        id: 'collar',
+        name: 'Cổ Áo Lập Lĩnh',
+        defaultColor: '#F9F6F0',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 3,
+        shape: 'collar',
+      },
+      {
+        id: 'skirt',
+        name: 'Quần Ống Rộng',
+        defaultColor: '#F9F6F0',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 1,
+        shape: 'skirt',
+      },
+    ],
+  },
+  {
+    id: 'ao-ngu-than-tay-chen',
+    name: 'Áo Ngũ Thân Tay Chẽn',
+    dynasty: 'Triều Nguyễn (1802 - 1945)',
+    gender: 'unisex',
+    description: 'Thường phục thanh lịch, tiện dụng hàng ngày, tiền thân trực tiếp của Áo Dài tân thời thế kỷ 20.',
+    historicalFact: 'Có năm thân vải tượng trưng cho phụ mẫu hai bên và bản thân người mặc, kèm theo ngũ thường (Nhân - Lễ - Nghĩa - Trí - Tín).',
+    layers: [
+      {
+        id: 'robe',
+        name: 'Thân Áo Chẽn',
+        defaultColor: '#1E4D3E',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 2,
+        shape: 'robe',
+      },
+      {
+        id: 'collar',
+        name: 'Khuy & Cổ Đứng',
+        defaultColor: '#C69214',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 4,
+        shape: 'collar',
+      },
+      {
+        id: 'skirt',
+        name: 'Quần Dài',
+        defaultColor: '#F9F6F0',
+        allowedPalette: DEFAULT_HEX_PALETTE,
+        zIndex: 1,
+        shape: 'skirt',
+      },
+    ],
+  },
+];
