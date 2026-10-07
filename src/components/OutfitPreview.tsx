@@ -121,8 +121,11 @@ function ShapeGraphic({ shape, color }: ShapeRendererProps) {
 }
 
 export function OutfitPreview() {
-  const { getCurrentOutfit, getLayerColor } = useOutfitStore();
+  const { getCurrentOutfit, getLayerColor, measurements, hiddenLayers } = useOutfitStore();
   const outfit = getCurrentOutfit();
+
+  const scaleX = measurements.weight / 50;
+  const scaleY = measurements.height / 160;
 
   if (!outfit) {
     return (
@@ -155,18 +158,34 @@ export function OutfitPreview() {
       {/* Silhouette Canvas Container */}
       <div className="relative flex-1 min-h-[380px] w-full bg-ivory border border-border-editorial/60 rounded-lg flex items-center justify-center p-4 overflow-hidden">
         {/* Subtle background mannequin base frame */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-          <svg viewBox="0 0 300 400" className="w-full h-full">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+          <svg viewBox="0 0 300 400" className="w-full h-full" style={{ transform: `scale(${scaleX}, ${scaleY})`, transformOrigin: 'bottom center', transition: 'transform 0.3s ease' }}>
+            {/* Hair back */}
+            <path d="M 125 45 C 120 70 130 90 130 90 L 170 90 C 170 90 180 70 175 45 Z" fill="#2A2A2A" />
             {/* Head circle */}
-            <circle cx="150" cy="55" r="22" fill="#888" />
+            <circle cx="150" cy="50" r="22" fill="#FAD6C3" />
+            {/* Eyes */}
+            <circle cx="143" cy="50" r="2.5" fill="#333" />
+            <circle cx="157" cy="50" r="2.5" fill="#333" />
+            {/* Blush */}
+            <ellipse cx="139" cy="54" rx="4" ry="2" fill="#FFB6C1" opacity="0.6" />
+            <ellipse cx="161" cy="54" rx="4" ry="2" fill="#FFB6C1" opacity="0.6" />
+            {/* Mouth */}
+            <path d="M 148 57 Q 150 59 152 57" stroke="#D18F8F" strokeWidth="1" fill="none" />
+            {/* Hair front/bangs */}
+            <path d="M 132 35 Q 150 25 168 35 Q 150 45 132 35 Z" fill="#2A2A2A" />
             {/* Neck */}
-            <rect x="144" y="75" width="12" height="15" fill="#888" />
+            <rect x="144" y="70" width="12" height="15" fill="#EBC2AD" />
           </svg>
         </div>
 
         {/* Dynamic Outfit Layers */}
-        <div className="relative w-full h-[380px]">
+        <div 
+          className="relative w-full h-[380px]"
+          style={{ transform: `scale(${scaleX}, ${scaleY})`, transformOrigin: 'bottom center', transition: 'transform 0.3s ease' }}
+        >
           {outfit.layers.map((layer) => {
+            if (hiddenLayers.includes(layer.id)) return null;
             const currentColor = getLayerColor(layer.id);
             return (
               <div
