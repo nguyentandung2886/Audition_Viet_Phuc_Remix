@@ -79,6 +79,7 @@ export const OUTFITS_DATA: Outfit[] = [
         allowedPalette: DEFAULT_HEX_PALETTE,
         zIndex: 5,
         shape: 'hat',
+        isOptional: true
       },
       {
         id: 'collar',
