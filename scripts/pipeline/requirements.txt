@@ -1,3 +1,6 @@
-Pillow
+google-genai
 rembg
+pillow
+opencv-python
+pytest
 pydantic
