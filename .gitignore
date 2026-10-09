@@ -26,3 +26,5 @@ next-env.d.ts
 
 # Pipeline Generated Assets
 /public/assets/
+
+scripts/pipeline/temp_processing/
