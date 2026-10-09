@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from PIL import Image
 import pytest
 
-from pipeline.processor import export_metadata, remove_background
+from pipeline.processor import export_metadata, extract_garment, remove_background
 
 
 def test_export_metadata():
@@ -162,3 +162,240 @@ def test_remove_background_opaque_warning(monkeypatch, caplog):
             "opaque" in record.message.lower() or "transparent" in record.message.lower()
             for record in caplog.records
         )
+
+
+def test_extract_garment_missing_inputs():
+    """Verify extract_garment returns False when inputs are missing or non-existent."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        non_existent = Path(temp_dir) / "missing.png"
+        existing = Path(temp_dir) / "existing.png"
+        out_file = Path(temp_dir) / "out.png"
+
+        img = Image.new("RGBA", (32, 32), (255, 0, 0, 255))
+        img.save(existing, format="PNG")
+
+        assert extract_garment(non_existent, existing, out_file) is False
+        assert extract_garment(existing, non_existent, out_file) is False
+        assert extract_garment("", existing, out_file) is False
+        assert extract_garment(existing, "", out_file) is False
+        assert extract_garment(existing, existing, "") is False
+        assert not out_file.exists()
+
+
+def test_extract_garment_creates_parent_dirs():
+    """Verify extract_garment automatically creates nested destination directories."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.png"
+        dressed_path = Path(temp_dir) / "dressed.png"
+        out_path = Path(temp_dir) / "nested" / "dir" / "garment.png"
+
+        # Create transparent base and dressed
+        base_img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+        base_img.save(base_path, format="PNG")
+
+        dressed_img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+        # Draw small clothing patch
+        for x in range(10, 20):
+            for y in range(10, 20):
+                dressed_img.putpixel((x, y), (200, 30, 40, 255))
+        dressed_img.save(dressed_path, format="PNG")
+
+        success = extract_garment(base_path, dressed_path, out_path)
+        assert success is True
+        assert out_path.exists()
+
+
+def test_extract_garment_subtracts_matching_body():
+    """Verify extract_garment masks matching body pixels as transparent and keeps clothing."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.png"
+        dressed_path = Path(temp_dir) / "dressed.png"
+        out_path = Path(temp_dir) / "garment.png"
+
+        # Base character: skin color (240, 200, 180) across y: 10..50, x: 20..40, rest transparent
+        base_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        skin_color = (240, 200, 180, 255)
+        for y in range(10, 50):
+            for x in range(20, 40):
+                base_img.putpixel((x, y), skin_color)
+        base_img.save(base_path, format="PNG")
+
+        # Dressed character:
+        # - Head/face y: 10..24, x: 20..40 is unchanged skin
+        # - Body garment y: 25..50, x: 20..40 is red ao dai (220, 20, 30)
+        # - Rest transparent
+        dressed_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        garment_color = (220, 20, 30, 255)
+        for y in range(10, 25):
+            for x in range(20, 40):
+                dressed_img.putpixel((x, y), skin_color)
+        for y in range(25, 50):
+            for x in range(20, 40):
+                dressed_img.putpixel((x, y), garment_color)
+        dressed_img.save(dressed_path, format="PNG")
+
+        success = extract_garment(base_path, dressed_path, out_path, tolerance=30.0)
+        assert success is True
+        assert out_path.exists()
+
+        with Image.open(out_path) as out_img:
+            assert out_img.mode == "RGBA"
+            # Head region must be transparent (Alpha = 0)
+            for y in range(10, 25):
+                for x in range(20, 40):
+                    px = out_img.getpixel((x, y))
+                    assert px[3] == 0, f"Head pixel at ({x}, {y}) should be transparent but got {px}"
+
+            # Garment region must be opaque red (Alpha = 255)
+            for y in range(25, 50):
+                for x in range(20, 40):
+                    px = out_img.getpixel((x, y))
+                    assert px[3] == 255, f"Garment pixel at ({x}, {y}) should be opaque but got {px}"
+                    assert px[0] == 220 and px[1] == 20 and px[2] == 30
+
+            # Background must be transparent
+            assert out_img.getpixel((0, 0))[3] == 0
+
+
+def test_extract_garment_garment_outside_base_silhouette():
+    """Verify extract_garment preserves clothing that extends beyond the base character silhouette."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.png"
+        dressed_path = Path(temp_dir) / "dressed.png"
+        out_path = Path(temp_dir) / "garment.png"
+
+        # Narrow base torso x: 28..36, y: 20..40
+        base_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        for y in range(20, 40):
+            for x in range(28, 36):
+                base_img.putpixel((x, y), (240, 200, 180, 255))
+        base_img.save(base_path, format="PNG")
+
+        # Dressed with wide sleeves x: 10..54, y: 20..40 in blue (30, 80, 220)
+        dressed_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        blue_sleeve = (30, 80, 220, 255)
+        for y in range(20, 40):
+            for x in range(10, 54):
+                dressed_img.putpixel((x, y), blue_sleeve)
+        dressed_img.save(dressed_path, format="PNG")
+
+        success = extract_garment(base_path, dressed_path, out_path, tolerance=30.0)
+        assert success is True
+
+        with Image.open(out_path) as out_img:
+            # Pixels outside base silhouette (x=15, y=30) must be preserved
+            sleeve_px = out_img.getpixel((15, 30))
+            assert sleeve_px[3] == 255
+            assert sleeve_px[:3] == (30, 80, 220)
+
+
+def test_extract_garment_dimension_mismatch_resizes():
+    """Verify extract_garment resizes dressed image to match base dimensions when mismatched."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.png"
+        dressed_path = Path(temp_dir) / "dressed.png"
+        out_path = Path(temp_dir) / "garment.png"
+
+        base_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        for y in range(10, 30):
+            for x in range(10, 30):
+                base_img.putpixel((x, y), (240, 200, 180, 255))
+        base_img.save(base_path, format="PNG")
+
+        # Dressed image is 128x128
+        dressed_img = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
+        for y in range(60, 100):
+            for x in range(40, 80):
+                dressed_img.putpixel((x, y), (220, 30, 30, 255))
+        dressed_img.save(dressed_path, format="PNG")
+
+        success = extract_garment(base_path, dressed_path, out_path)
+        assert success is True
+
+        with Image.open(out_path) as out_img:
+            # Output dimensions must match base image size (64, 64)
+            assert out_img.size == (64, 64)
+            assert out_img.mode == "RGBA"
+
+
+def test_extract_garment_with_opaque_background_and_fallback(monkeypatch):
+    """Verify extract_garment handles opaque RGB images using background removal fallback."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.jpg"
+        dressed_path = Path(temp_dir) / "dressed.jpg"
+        out_path = Path(temp_dir) / "garment.png"
+
+        # Base: white background (255, 255, 255), skin circle in center
+        base_img = Image.new("RGB", (64, 64), color="white")
+        for y in range(20, 44):
+            for x in range(20, 44):
+                base_img.putpixel((x, y), (240, 200, 180))
+        base_img.save(base_path, format="JPEG")
+
+        # Dressed: white background, same skin face at 20..30, green dress at 31..44
+        dressed_img = Image.new("RGB", (64, 64), color="white")
+        for y in range(20, 31):
+            for x in range(20, 44):
+                dressed_img.putpixel((x, y), (240, 200, 180))
+        for y in range(31, 44):
+            for x in range(20, 44):
+                dressed_img.putpixel((x, y), (20, 180, 40))
+        dressed_img.save(dressed_path, format="JPEG")
+
+        def mock_rembg_fail(*args, **kwargs):
+            raise RuntimeError("rembg disabled in test")
+
+        monkeypatch.setattr("rembg.remove", mock_rembg_fail)
+
+        success = extract_garment(base_path, dressed_path, out_path, threshold=240)
+        assert success is True
+
+        with Image.open(out_path) as out_img:
+            assert out_img.mode == "RGBA"
+            # Background should be transparent
+            assert out_img.getpixel((5, 5))[3] == 0
+            # Face should be transparent
+            assert out_img.getpixel((25, 25))[3] == 0
+            # Green dress should be visible
+            green_px = out_img.getpixel((25, 36))
+            assert green_px[3] > 0
+            assert green_px[1] > 100
+
+
+def test_extract_garment_noise_cleanup():
+    """Verify cleanup_noise removes tiny stray pixel specks."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        base_path = Path(temp_dir) / "base.png"
+        dressed_path = Path(temp_dir) / "dressed.png"
+        out_path = Path(temp_dir) / "garment.png"
+
+        # Base: skin
+        base_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        for y in range(10, 50):
+            for x in range(20, 40):
+                base_img.putpixel((x, y), (240, 200, 180, 255))
+        base_img.save(base_path, format="PNG")
+
+        # Dressed: large garment (25..50, 20..40) + single stray noise pixel on face at (22, 12)
+        dressed_img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        for y in range(10, 25):
+            for x in range(20, 40):
+                dressed_img.putpixel((x, y), (240, 200, 180, 255))
+        dressed_img.putpixel((22, 12), (0, 0, 255, 255))  # single pixel noise
+
+        for y in range(25, 50):
+            for x in range(20, 40):
+                dressed_img.putpixel((x, y), (220, 20, 30, 255))
+        dressed_img.save(dressed_path, format="PNG")
+
+        success = extract_garment(
+            base_path, dressed_path, out_path, cleanup_noise=True, min_island_size=10
+        )
+        assert success is True
+
+        with Image.open(out_path) as out_img:
+            # The single noise speck should be cleaned up
+            assert out_img.getpixel((22, 12))[3] == 0
+            # The large garment should be preserved
+            assert out_img.getpixel((30, 35))[3] == 255
+
