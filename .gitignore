@@ -23,3 +23,6 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# Pipeline Generated Assets
+/public/assets/
