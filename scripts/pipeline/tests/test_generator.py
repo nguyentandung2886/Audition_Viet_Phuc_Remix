@@ -250,3 +250,127 @@ def test_generate_image_aspect_ratio_none(monkeypatch):
             prompt="ao dai prompt",
         )
 
+
+def test_generate_image_with_reference_image(monkeypatch):
+    """Verify that providing reference_image_path calls client.models.edit_image."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "dressed.png"
+        ref_file = Path(temp_dir) / "base_ref.png"
+        ref_file.write_bytes(b"\x89PNG\r\n\x1a\nbasechar")
+
+        fake_bytes = b"\x89PNG\r\n\x1a\nnewimage"
+        mock_image = MagicMock()
+        mock_image.image_bytes = fake_bytes
+        mock_generated_image = MagicMock()
+        mock_generated_image.image = mock_image
+        mock_response = MagicMock()
+        mock_response.generated_images = [mock_generated_image]
+
+        mock_client = MagicMock()
+        mock_client.models.edit_image.return_value = mock_response
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image(
+            prompt="add red ao dai",
+            output_path=str(out_file),
+            reference_image_path=str(ref_file),
+        )
+
+        assert result is True
+        assert out_file.exists()
+        assert out_file.read_bytes() == fake_bytes
+
+        # Verify edit_image was called, NOT generate_images
+        mock_client.models.edit_image.assert_called_once()
+        mock_client.models.generate_images.assert_not_called()
+
+        call_kwargs = mock_client.models.edit_image.call_args.kwargs
+        assert call_kwargs["model"] == "imagen-3.0-generate-002"
+        assert call_kwargs["prompt"] == "add red ao dai"
+        assert len(call_kwargs["reference_images"]) == 1
+        ref_img_arg = call_kwargs["reference_images"][0]
+        assert isinstance(ref_img_arg, types.RawReferenceImage)
+        assert ref_img_arg.reference_id == 1
+        assert ref_img_arg.reference_image.image_bytes == b"\x89PNG\r\n\x1a\nbasechar"
+        assert call_kwargs["config"].edit_mode == "EDIT_MODE_DEFAULT"
+        assert call_kwargs["config"].aspect_ratio == "2:3"
+
+
+def test_generate_image_with_missing_reference_image(monkeypatch):
+    """Verify that a non-existent reference_image_path returns False immediately."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "dressed.png"
+        non_existent_ref = Path(temp_dir) / "does_not_exist.png"
+
+        mock_client = MagicMock()
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image(
+            prompt="add red ao dai",
+            output_path=str(out_file),
+            reference_image_path=str(non_existent_ref),
+        )
+
+        assert result is False
+        assert not out_file.exists()
+        mock_client.models.edit_image.assert_not_called()
+        mock_client.models.generate_images.assert_not_called()
+
+
+def test_generate_image_fallback_without_reference_image(monkeypatch):
+    """Verify that omitting reference_image_path uses generate_images, not edit_image."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "base.png"
+        fake_bytes = b"\x89PNG\r\n\x1a\nbaseresult"
+
+        mock_image = MagicMock()
+        mock_image.image_bytes = fake_bytes
+        mock_generated_image = MagicMock()
+        mock_generated_image.image = mock_image
+        mock_response = MagicMock()
+        mock_response.generated_images = [mock_generated_image]
+
+        mock_client = MagicMock()
+        mock_client.models.generate_images.return_value = mock_response
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image(
+            prompt="base anime character",
+            output_path=str(out_file),
+            reference_image_path=None,
+        )
+
+        assert result is True
+        mock_client.models.generate_images.assert_called_once()
+        mock_client.models.edit_image.assert_not_called()
+
+
+def test_generate_image_edit_api_exception(monkeypatch):
+    """Verify that an exception in edit_image is gracefully caught and returns False."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "dressed.png"
+        ref_file = Path(temp_dir) / "base.png"
+        ref_file.write_bytes(b"\x89PNG\r\n\x1a\nbasechar")
+
+        mock_client = MagicMock()
+        mock_client.models.edit_image.side_effect = RuntimeError("Edit quota exceeded")
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image(
+            prompt="add red ao dai",
+            output_path=str(out_file),
+            reference_image_path=str(ref_file),
+        )
+
+        assert result is False
+        assert not out_file.exists()
+
+
