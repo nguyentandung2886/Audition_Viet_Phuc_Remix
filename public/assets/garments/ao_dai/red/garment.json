@@ -1,0 +1,45 @@
+{
+  "garmentId": "ao_dai/red",
+  "name": "\u00c1o D\u00e0i \u0110\u1ecf Truy\u1ec1n Th\u1ed1ng",
+  "characterId": "base_01",
+  "garmentType": "ao_dai",
+  "dynasty": "Nguyen",
+  "gender": "nu",
+  "description": "\u00c1o d\u00e0i truy\u1ec1n th\u1ed1ng m\u00e0u \u0111\u1ecf thanh l\u1ecbch th\u1eddi Nguy\u1ec5n",
+  "historicalFact": "Trang ph\u1ee5c truy\u1ec1n th\u1ed1ng Vi\u1ec7t Nam k\u1ebf th\u1eeba tinh hoa t\u1eeb \u00e1o ng\u0169 th\u00e2n th\u1eddi Nguy\u1ec5n.",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "renderOrder": 10,
+  "layers": [
+    {
+      "layerId": "torso",
+      "name": "Th\u00e2n \u00e1o d\u00e0i \u0111\u1ecf",
+      "renderOrder": 10,
+      "assetPath": "/assets/garments/ao_dai/red/torso.png",
+      "visible": true
+    }
+  ],
+  "components": [
+    {
+      "assetId": "ao_dai_red_torso",
+      "name": "\u00c1o D\u00e0i Torso",
+      "characterId": "base_01",
+      "garmentType": "ao_dai",
+      "componentType": "front_panel",
+      "canvasWidth": 1024,
+      "canvasHeight": 1536,
+      "renderOrder": 10,
+      "anchorReferences": [
+        "neck",
+        "waist"
+      ],
+      "colorVariants": [
+        "red"
+      ],
+      "alphaAvailable": true,
+      "filePath": "/assets/garments/ao_dai/red/torso.png"
+    }
+  ]
+}
