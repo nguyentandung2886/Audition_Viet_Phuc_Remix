@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface CharacterCanvas {
@@ -94,6 +94,17 @@ export default function OutfitComposer({
   const [garmentError, setGarmentError] = useState<string | null>(null);
   const [loadedGarmentId, setLoadedGarmentId] = useState<string | null | undefined>(undefined);
 
+  // Keep latest callback references in refs to break infinite render loops
+  const onGarmentLoadedRef = useRef(onGarmentLoaded);
+  useEffect(() => {
+    onGarmentLoadedRef.current = onGarmentLoaded;
+  });
+
+  const onCharacterLoadedRef = useRef(onCharacterLoaded);
+  useEffect(() => {
+    onCharacterLoadedRef.current = onCharacterLoaded;
+  });
+
   // Derive loading status idiomatically
   const characterLoading = Boolean(characterId && loadedCharacterId !== characterId && !characterError);
   const garmentLoading = Boolean(garmentId && loadedGarmentId !== garmentId && !garmentError);
@@ -113,7 +124,7 @@ export default function OutfitComposer({
           setCharacter(data);
           setCharacterError(null);
           setLoadedCharacterId(characterId);
-          onCharacterLoaded?.(data);
+          onCharacterLoadedRef.current?.(data);
         }
       } catch (err: unknown) {
         if (isMounted) {
@@ -127,7 +138,7 @@ export default function OutfitComposer({
           setCharacter(fallbackData);
           setCharacterError(errMsg);
           setLoadedCharacterId(characterId);
-          onCharacterLoaded?.(fallbackData);
+          onCharacterLoadedRef.current?.(fallbackData);
         }
       }
     }
@@ -139,13 +150,20 @@ export default function OutfitComposer({
     return () => {
       isMounted = false;
     };
-  }, [characterId, onCharacterLoaded]);
+  }, [characterId]);
 
   // 2. Load Garment metadata
   useEffect(() => {
     let isMounted = true;
 
     if (!garmentId) {
+      queueMicrotask(() => {
+        if (!isMounted) return;
+        setGarment(null);
+        setGarmentError(null);
+        setLoadedGarmentId(null);
+        onGarmentLoadedRef.current?.(null);
+      });
       return;
     }
 
@@ -180,7 +198,7 @@ export default function OutfitComposer({
           setGarment(normalizedGarment);
           setGarmentError(null);
           setLoadedGarmentId(garmentId);
-          onGarmentLoaded?.(normalizedGarment);
+          onGarmentLoadedRef.current?.(normalizedGarment);
         }
       } catch (err: unknown) {
         if (isMounted) {
@@ -188,7 +206,7 @@ export default function OutfitComposer({
           setGarment(null);
           setGarmentError(errMsg);
           setLoadedGarmentId(garmentId);
-          onGarmentLoaded?.(null);
+          onGarmentLoadedRef.current?.(null);
         }
       }
     }
@@ -198,7 +216,7 @@ export default function OutfitComposer({
     return () => {
       isMounted = false;
     };
-  }, [garmentId, onGarmentLoaded]);
+  }, [garmentId]);
 
   // If garmentId was set to null/empty, clear garment state when active
   const effectiveGarment = garmentId ? garment : null;
@@ -301,22 +319,32 @@ export default function OutfitComposer({
         </motion.div>
       )}
 
-      {/* Graceful Error Notice for Character Loading */}
-      {characterError && !character && (
-        <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center bg-black/90 backdrop-blur-md"
+      {/* Graceful Warning Notice for Character Loading Fallback */}
+      {characterError && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 15 }}
+          className="absolute top-12 inset-x-4 z-50 rounded-xl border border-red-500/30 bg-zinc-950/90 p-3.5 backdrop-blur-lg shadow-2xl"
           data-testid="character-error-notice"
         >
-          <div className="w-12 h-12 rounded-full bg-red-950/80 border border-red-500/40 flex items-center justify-center text-red-400 text-xl font-bold mb-3">
-            !
+          <div className="flex items-start gap-2.5">
+            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400 text-xs font-bold">
+              !
+            </div>
+            <div className="flex-1 text-xs">
+              <p className="font-semibold text-red-200 tracking-wide">
+                Thông báo dữ liệu nhân vật
+              </p>
+              <p className="mt-0.5 font-mono text-[11px] text-zinc-400 break-words">
+                {characterError}
+              </p>
+              <p className="mt-1 text-[10px] text-zinc-500">
+                Fallback: Đang sử dụng hình ảnh base trực tiếp từ đường dẫn mặc định.
+              </p>
+            </div>
           </div>
-          <h4 className="text-sm font-semibold text-zinc-200">
-            Không thể nạp nhân vật cơ sở
-          </h4>
-          <p className="mt-1 text-xs text-zinc-400 font-mono max-w-xs break-words">
-            {characterError}
-          </p>
-        </div>
+        </motion.div>
       )}
 
       {/* Bottom Layer Status & Technical Spec Badge */}

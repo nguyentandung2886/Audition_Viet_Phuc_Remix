@@ -62,7 +62,7 @@ export default function Home() {
               <OutfitComposer
                 characterId="base_01"
                 garmentId={selectedGarment}
-                onGarmentLoaded={(meta) => setActiveGarmentMeta(meta)}
+                onGarmentLoaded={setActiveGarmentMeta}
                 className="relative z-10"
               />
             </div>
