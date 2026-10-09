@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 import pytest
+from google.genai import types
 
 import pipeline.generator
 
@@ -98,6 +99,7 @@ def test_generate_image_success_imagen(monkeypatch):
         mock_client.models.generate_images.assert_called_once_with(
             model="imagen-3.0-generate-002",
             prompt="ao dai prompt",
+            config=types.GenerateImagesConfig(aspect_ratio="2:3"),
         )
 
 
@@ -190,3 +192,61 @@ def test_generate_image_missing_image_bytes(monkeypatch):
 
         assert result is False
         assert not out_file.exists()
+
+
+def test_generate_image_custom_aspect_ratio(monkeypatch):
+    """Verify that custom aspect_ratio is correctly forwarded to the model call."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "character.png"
+        fake_bytes = b"sample_bytes"
+
+        mock_image = MagicMock()
+        mock_image.image_bytes = fake_bytes
+        mock_generated_image = MagicMock()
+        mock_generated_image.image = mock_image
+        mock_response = MagicMock()
+        mock_response.generated_images = [mock_generated_image]
+
+        mock_client = MagicMock()
+        mock_client.models.generate_images.return_value = mock_response
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image("ao dai prompt", str(out_file), aspect_ratio="1:1")
+
+        assert result is True
+        mock_client.models.generate_images.assert_called_once_with(
+            model="imagen-3.0-generate-002",
+            prompt="ao dai prompt",
+            config=types.GenerateImagesConfig(aspect_ratio="1:1"),
+        )
+
+
+def test_generate_image_aspect_ratio_none(monkeypatch):
+    """Verify that aspect_ratio=None does not include config in the model call."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        out_file = Path(temp_dir) / "character.png"
+        fake_bytes = b"sample_bytes"
+
+        mock_image = MagicMock()
+        mock_image.image_bytes = fake_bytes
+        mock_generated_image = MagicMock()
+        mock_generated_image.image = mock_image
+        mock_response = MagicMock()
+        mock_response.generated_images = [mock_generated_image]
+
+        mock_client = MagicMock()
+        mock_client.models.generate_images.return_value = mock_response
+
+        monkeypatch.setattr("pipeline.generator.load_config", lambda: {"API_KEY": "fake_key", "OUTPUT_DIR": temp_dir})
+        monkeypatch.setattr("pipeline.generator.genai.Client", lambda api_key: mock_client)
+
+        result = generate_image("ao dai prompt", str(out_file), aspect_ratio=None)
+
+        assert result is True
+        mock_client.models.generate_images.assert_called_once_with(
+            model="imagen-3.0-generate-002",
+            prompt="ao dai prompt",
+        )
+

@@ -7,9 +7,13 @@ Imagen / Gemini models with robust validation, error handling, and logging.
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from google import genai
+try:
+    from google.genai import types
+except ImportError:
+    types = None  # type: ignore
 
 try:
     from pipeline.config import load_config
@@ -27,6 +31,7 @@ def generate_image(
     output_path: Union[str, Path],
     model: Optional[str] = None,
     client: Optional[genai.Client] = None,
+    aspect_ratio: Optional[str] = "2:3",
 ) -> bool:
     """Generate an image from a text prompt and save to the specified output path.
 
@@ -35,6 +40,7 @@ def generate_image(
         output_path: Destination file path for saving the image (must be within OUTPUT_DIR).
         model: Model name/identifier (defaults to GEMINI_IMAGE_MODEL or 'imagen-3.0-generate-002').
         client: Optional pre-configured genai.Client instance.
+        aspect_ratio: Optional aspect ratio for image generation (defaults to "2:3").
 
     Returns:
         bool: True if generation and saving succeeded, False otherwise.
@@ -88,10 +94,17 @@ def generate_image(
 
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-        response = client.models.generate_images(
-            model=target_model,
-            prompt=prompt,
-        )
+        call_kwargs: dict[str, Any] = {
+            "model": target_model,
+            "prompt": prompt,
+        }
+        if aspect_ratio:
+            if types is not None and hasattr(types, "GenerateImagesConfig"):
+                call_kwargs["config"] = types.GenerateImagesConfig(aspect_ratio=aspect_ratio)
+            else:
+                call_kwargs["config"] = {"aspect_ratio": aspect_ratio}
+
+        response = client.models.generate_images(**call_kwargs)
 
         if not response or not response.generated_images:
             logger.error(

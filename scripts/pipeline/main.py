@@ -27,11 +27,19 @@ if str(pipeline_dir) not in sys.path:
 try:
     from pipeline.config import load_config
     from pipeline.generator import generate_image
-    from pipeline.processor import export_metadata, remove_background
+    from pipeline.processor import (
+        crop_and_align_to_canvas,
+        export_metadata,
+        remove_background,
+    )
 except ImportError:
     from config import load_config  # type: ignore
     from generator import generate_image  # type: ignore
-    from processor import export_metadata, remove_background  # type: ignore
+    from processor import (  # type: ignore
+        crop_and_align_to_canvas,
+        export_metadata,
+        remove_background,
+    )
 
 # Configure logging
 logging.basicConfig(
@@ -165,6 +173,7 @@ def run_pipeline(mock: bool = False) -> int:
         gen_char_success = generate_image(
             prompt=BASE_CHARACTER_PROMPT,
             output_path=raw_char_path,
+            aspect_ratio="2:3",
         )
 
     if not gen_char_success:
@@ -182,6 +191,9 @@ def run_pipeline(mock: bool = False) -> int:
     if not rmbg_char_success:
         logger.error("Failed to process background removal for base character.")
         return 1
+
+    logger.info("Aligning base character to canonical canvas dimensions (1024x1536)...")
+    crop_and_align_to_canvas(final_char_png, target_width=1024, target_height=1536)
 
     logger.info("Exporting character metadata to %s...", final_char_json)
     export_metadata(BASE_CHARACTER_METADATA, final_char_json)
@@ -206,6 +218,7 @@ def run_pipeline(mock: bool = False) -> int:
         gen_garment_success = generate_image(
             prompt=AO_DAI_PROMPT,
             output_path=raw_garment_path,
+            aspect_ratio="2:3",
         )
 
     if not gen_garment_success:
@@ -223,6 +236,9 @@ def run_pipeline(mock: bool = False) -> int:
     if not rmbg_garment_success:
         logger.error("Failed to process background removal for Ao Dai garment.")
         return 1
+
+    logger.info("Aligning Ao Dai garment to canonical canvas dimensions (1024x1536)...")
+    crop_and_align_to_canvas(final_garment_png, target_width=1024, target_height=1536)
 
     logger.info("Exporting garment metadata to %s...", final_garment_json)
     export_metadata(AO_DAI_METADATA, final_garment_json)
