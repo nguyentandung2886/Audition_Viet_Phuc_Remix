@@ -1,5 +1,6 @@
 google-genai
 rembg
+onnxruntime
 pillow
 opencv-python
 pytest
