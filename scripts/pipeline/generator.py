@@ -1,7 +1,7 @@
 """AI Image Generation Module using Google GenAI SDK.
 
 Provides functions to generate base characters and clothing assets using
-Gemini / Imagen models with robust error handling and logging.
+Imagen / Gemini models with robust validation, error handling, and logging.
 """
 
 import logging
@@ -32,7 +32,7 @@ def generate_image(
 
     Args:
         prompt: Text description of the image to generate.
-        output_path: Destination file path for saving the image.
+        output_path: Destination file path for saving the image (must be within OUTPUT_DIR).
         model: Model name/identifier (defaults to GEMINI_IMAGE_MODEL or 'imagen-3.0-generate-002').
         client: Optional pre-configured genai.Client instance.
 
@@ -50,63 +50,50 @@ def generate_image(
     target_model = model or DEFAULT_MODEL
 
     try:
+        cfg = load_config()
+        output_dir = cfg.get("OUTPUT_DIR")
+        if not output_dir:
+            logger.error("Failed to generate image: OUTPUT_DIR is not configured.")
+            return False
+
+        base_dir = Path(output_dir).resolve()
+        dest_path = Path(output_path)
+        if not dest_path.is_absolute():
+            dest_path = (base_dir / dest_path).resolve()
+        else:
+            dest_path = dest_path.resolve()
+
+        try:
+            if dest_path == base_dir or not dest_path.is_relative_to(base_dir):
+                logger.error(
+                    "Failed to generate image: output path '%s' is outside configured OUTPUT_DIR '%s'.",
+                    dest_path,
+                    base_dir,
+                )
+                return False
+        except (ValueError, AttributeError):
+            logger.error(
+                "Failed to generate image: output path '%s' is outside configured OUTPUT_DIR '%s'.",
+                dest_path,
+                base_dir,
+            )
+            return False
+
         if client is None:
-            cfg = load_config()
             api_key = cfg.get("API_KEY")
             if not api_key:
                 logger.error("Failed to generate image: GEMINI_API_KEY is not configured.")
                 return False
             client = genai.Client(api_key=api_key)
 
-        dest_path = Path(output_path)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-        image_bytes: Optional[bytes] = None
+        response = client.models.generate_images(
+            model=target_model,
+            prompt=prompt,
+        )
 
-        # Imagen models use generate_images
-        if "imagen" in target_model.lower():
-            response = client.models.generate_images(
-                model=target_model,
-                prompt=prompt,
-            )
-            if response and response.generated_images:
-                img_obj = response.generated_images[0].image
-                if img_obj and img_obj.image_bytes:
-                    image_bytes = img_obj.image_bytes
-        else:
-            # For gemini / multimodal models, attempt generate_images first,
-            # then fallback to generate_content if unsupported.
-            try:
-                response = client.models.generate_images(
-                    model=target_model,
-                    prompt=prompt,
-                )
-                if response and response.generated_images:
-                    img_obj = response.generated_images[0].image
-                    if img_obj and img_obj.image_bytes:
-                        image_bytes = img_obj.image_bytes
-            except Exception as gen_err:
-                logger.debug(
-                    "generate_images failed for model %s (%s), falling back to generate_content",
-                    target_model,
-                    gen_err,
-                )
-                content_resp = client.models.generate_content(
-                    model=target_model,
-                    contents=prompt,
-                )
-                if content_resp and content_resp.candidates:
-                    for candidate in content_resp.candidates:
-                        if candidate.content and candidate.content.parts:
-                            for part in candidate.content.parts:
-                                inline = getattr(part, "inline_data", None)
-                                if inline and getattr(inline, "data", None):
-                                    image_bytes = inline.data
-                                    break
-                        if image_bytes:
-                            break
-
-        if not image_bytes:
+        if not response or not response.generated_images:
             logger.error(
                 "No image data returned from model '%s' for prompt: %s",
                 target_model,
@@ -114,7 +101,12 @@ def generate_image(
             )
             return False
 
-        dest_path.write_bytes(image_bytes)
+        img_obj = response.generated_images[0].image
+        if not img_obj or not img_obj.image_bytes:
+            logger.error("Image object or image bytes missing in response.")
+            return False
+
+        dest_path.write_bytes(img_obj.image_bytes)
         logger.info("Successfully generated and saved image to %s", dest_path)
         return True
 
