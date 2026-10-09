@@ -7,12 +7,37 @@ export default function Home() {
   const [selectedGarment, setSelectedGarment] = useState<string | null>("ao_dai/red");
   const [activeGarmentMeta, setActiveGarmentMeta] = useState<GarmentMetadata | null>(null);
 
+  // Individual modular layer visibility states
+  const [layerVisibility, setLayerVisibility] = useState<Record<string, boolean>>({
+    pants: true,
+    torso: true,
+    necklace: true,
+    headpiece: true,
+  });
+
+  // Color Mood / Hue tone filter
+  const [activeMood, setActiveMood] = useState<"red" | "jade" | "gold">("red");
+
+  const toggleLayer = (layerKey: string) => {
+    setLayerVisibility((prev) => ({
+      ...prev,
+      [layerKey]: !prev[layerKey],
+    }));
+  };
+
+  // Color tone filter styles
+  const moodFilterClass = {
+    red: "",
+    jade: "hue-rotate-[140deg] saturate-125",
+    gold: "hue-rotate-[45deg] saturate-150 brightness-110",
+  }[activeMood];
+
   return (
     <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col font-sans selection:bg-red-900 selection:text-white">
       {/* Editorial Ambient Background Glow */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-red-950/15 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-amber-950/15 rounded-full blur-[140px]" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-red-950/20 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-amber-950/20 rounded-full blur-[140px]" />
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] [background-size:32px_32px]" />
       </div>
 
@@ -56,18 +81,21 @@ export default function Home() {
           <div className="w-full max-w-[500px]">
             {/* Stage Pedestal Frame */}
             <div className="relative group">
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-red-600/20 via-amber-500/10 to-transparent blur-xl transition-all duration-700 group-hover:from-red-600/30" />
+              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-red-600/25 via-amber-500/15 to-transparent blur-2xl transition-all duration-700 group-hover:from-red-600/35" />
               
-              {/* Core Component Render */}
-              <OutfitComposer
-                characterId="base_01"
-                garmentId={selectedGarment}
-                onGarmentLoaded={setActiveGarmentMeta}
-                className="relative z-10"
-              />
+              {/* Core Component Render with Mood Tone filter */}
+              <div className={`transition-all duration-500 ${moodFilterClass}`}>
+                <OutfitComposer
+                  characterId="base_01"
+                  garmentId={selectedGarment}
+                  layerVisibility={layerVisibility}
+                  onGarmentLoaded={setActiveGarmentMeta}
+                  className="relative z-10"
+                />
+              </div>
             </div>
 
-            {/* Quick Interactive Switcher Bar */}
+            {/* Garment Quick Switcher Bar */}
             <div className="mt-5 p-2 rounded-xl bg-zinc-900/70 border border-white/5 backdrop-blur-md flex items-center justify-center gap-2">
               <button
                 type="button"
@@ -78,7 +106,7 @@ export default function Home() {
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Áo Dài Đỏ (Đầy đủ)
+                Áo Dài Anime
               </button>
               <button
                 type="button"
@@ -89,7 +117,7 @@ export default function Home() {
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Base Mannequin
+                Base Nhân Vật Anime
               </button>
               <button
                 type="button"
@@ -103,6 +131,111 @@ export default function Home() {
                 Test Fallback Lỗi
               </button>
             </div>
+
+            {/* Modular Component Layer Toggles */}
+            {selectedGarment === "ao_dai/red" && (
+              <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-amber-500/20 backdrop-blur-md">
+                <div className="flex items-center justify-between mb-3 text-xs font-mono text-zinc-400 uppercase tracking-wider">
+                  <span>Tùy Biến Phân Lớp (Modular Layers)</span>
+                  <span className="text-amber-400 text-[10px]">Framer Motion</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => toggleLayer("headpiece")}
+                    className={`py-2 px-3 rounded-lg border text-left flex items-center justify-between transition-all ${
+                      layerVisibility.headpiece
+                        ? "bg-red-950/60 border-red-500/50 text-red-200"
+                        : "bg-black/40 border-zinc-800 text-zinc-500"
+                    }`}
+                  >
+                    <span>👑 Mấn Đội Đầu</span>
+                    <span className="font-mono text-[10px]">
+                      {layerVisibility.headpiece ? "ON" : "OFF"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleLayer("necklace")}
+                    className={`py-2 px-3 rounded-lg border text-left flex items-center justify-between transition-all ${
+                      layerVisibility.necklace
+                        ? "bg-amber-950/60 border-amber-500/50 text-amber-200"
+                        : "bg-black/40 border-zinc-800 text-zinc-500"
+                    }`}
+                  >
+                    <span>📿 Kiềng Bạc Sen</span>
+                    <span className="font-mono text-[10px]">
+                      {layerVisibility.necklace ? "ON" : "OFF"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleLayer("torso")}
+                    className={`py-2 px-3 rounded-lg border text-left flex items-center justify-between transition-all ${
+                      layerVisibility.torso
+                        ? "bg-red-950/60 border-red-500/50 text-red-200"
+                        : "bg-black/40 border-zinc-800 text-zinc-500"
+                    }`}
+                  >
+                    <span>👘 Thân Áo Dài</span>
+                    <span className="font-mono text-[10px]">
+                      {layerVisibility.torso ? "ON" : "OFF"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleLayer("pants")}
+                    className={`py-2 px-3 rounded-lg border text-left flex items-center justify-between transition-all ${
+                      layerVisibility.pants
+                        ? "bg-zinc-800/80 border-zinc-500 text-zinc-200"
+                        : "bg-black/40 border-zinc-800 text-zinc-500"
+                    }`}
+                  >
+                    <span>👖 Quần Lụa Trắng</span>
+                    <span className="font-mono text-[10px]">
+                      {layerVisibility.pants ? "ON" : "OFF"}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Color Mood Selector */}
+                <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                    Sắc Thái / Color Mood:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      title="Đỏ Hoàng Triều"
+                      onClick={() => setActiveMood("red")}
+                      className={`w-6 h-6 rounded-full bg-red-600 transition-all ${
+                        activeMood === "red" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      title="Ngọc Bích Cung Đình"
+                      onClick={() => setActiveMood("jade")}
+                      className={`w-6 h-6 rounded-full bg-emerald-600 transition-all ${
+                        activeMood === "jade" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      title="Hoàng Yến Quý Tộc"
+                      onClick={() => setActiveMood("gold")}
+                      className={`w-6 h-6 rounded-full bg-amber-500 transition-all ${
+                        activeMood === "gold" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -120,13 +253,13 @@ export default function Home() {
             </div>
 
             <h2 className="mt-2 text-2xl sm:text-3xl font-serif tracking-tight text-white font-medium">
-              {activeGarmentMeta?.name || (selectedGarment === null ? "Mannequin Anime Cơ Sở" : "Thử Nghiệm Ngoại Lệ")}
+              {activeGarmentMeta?.name || (selectedGarment === null ? "Nữ Sinh Anime Việt Nam (Base Mannequin)" : "Thử Nghiệm Ngoại Lệ")}
             </h2>
 
             <p className="mt-3 text-sm leading-relaxed text-zinc-300">
               {activeGarmentMeta?.description ||
                 (selectedGarment === null
-                  ? "Nhân vật nữ cơ sở vẽ theo phong cách hoạt hình anime Nhật Bản kết hợp tỷ lệ giải phẫu học chuẩn xác, khớp nối mannequin và mốc neo tọa độ để thử nghiệm trang phục nhiều lớp."
+                  ? "Nhân vật nữ cơ sở vẽ theo phong cách hoạt hình anime Nhật Bản hiện đại, tỷ lệ giải phẫu học chuẩn xác, tư thế đứng thẳng chính diện với mốc neo tọa độ giải phẫu (head, neck, waist, hips) đảm bảo mọi layer trang phục khớp nối hoàn hảo từng pixel."
                   : "Mô phỏng trường hợp file dữ liệu JSON bị thiếu hoặc đường dẫn tài nguyên không tồn tại, kiểm chứng cơ chế tự phục hồi và hiển thị thông báo an toàn của OutfitComposer.")}
             </p>
 
@@ -179,7 +312,7 @@ export default function Home() {
           <div className="p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800 backdrop-blur-md font-mono text-xs">
             <h3 className="text-xs uppercase tracking-widest text-zinc-400 mb-3 flex items-center justify-between">
               <span>Trạng Thái Các Lớp Hiển Thị</span>
-              <span className="text-zinc-500 text-[10px]">Z-Index Stack</span>
+              <span className="text-zinc-500 text-[10px]">Z-Index Hierarchy</span>
             </h3>
 
             <div className="space-y-2">
@@ -192,13 +325,47 @@ export default function Home() {
               </div>
 
               {selectedGarment === "ao_dai/red" && (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-red-950/30 border border-red-500/20">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-                    <span className="text-red-200">Áo Dài Torso (torso.png)</span>
-                  </div>
-                  <span className="text-red-400/80 text-[10px]">renderOrder: 10</span>
-                </div>
+                <>
+                  {layerVisibility.pants && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/60 border border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-zinc-300" />
+                        <span className="text-zinc-300">Quần Lụa Trắng (pants.png)</span>
+                      </div>
+                      <span className="text-zinc-400 text-[10px]">renderOrder: 25</span>
+                    </div>
+                  )}
+
+                  {layerVisibility.torso && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-950/40 border border-red-500/30">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                        <span className="text-red-200">Thân Áo Dài Đỏ Hoa Sen (torso.png)</span>
+                      </div>
+                      <span className="text-red-400/90 text-[10px]">renderOrder: 40</span>
+                    </div>
+                  )}
+
+                  {layerVisibility.necklace && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-amber-950/30 border border-amber-500/30">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-300" />
+                        <span className="text-amber-200">Kiềng Bạc Cổ Truyền (necklace.png)</span>
+                      </div>
+                      <span className="text-amber-400 text-[10px]">renderOrder: 50</span>
+                    </div>
+                  )}
+
+                  {layerVisibility.headpiece && (
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-950/60 border border-red-500/40">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        <span className="text-red-200">Mấn Đội Đầu Hoàng Kim (headpiece.png)</span>
+                      </div>
+                      <span className="text-red-400 text-[10px]">renderOrder: 60</span>
+                    </div>
+                  )}
+                </>
               )}
 
               {selectedGarment === "ao_dai/missing_test" && (
@@ -217,7 +384,7 @@ export default function Home() {
 
       {/* Editorial Footer */}
       <footer className="relative z-20 border-t border-zinc-800/80 bg-black/80 px-6 py-6 text-center text-xs text-zinc-500 font-mono">
-        <p>VIỆT PHỤC REMIX · AI ASSET PIPELINE & DIGITAL ATELIER MVP</p>
+        <p>VIỆT PHỤC REMIX · AI ASSET PIPELINE & DIGITAL ATELIER</p>
         <p className="mt-1 text-[11px] text-zinc-600">
           Tôn vinh vẻ đẹp truyền thống Việt Nam qua lăng kính đồ họa Anime và Công nghệ Web Hiện đại
         </p>

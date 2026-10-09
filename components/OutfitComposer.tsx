@@ -61,6 +61,7 @@ export interface GarmentMetadata {
 export interface OutfitComposerProps {
   characterId: string;
   garmentId?: string | null;
+  layerVisibility?: Record<string, boolean>;
   className?: string;
   showLayerBadge?: boolean;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
@@ -81,6 +82,7 @@ export interface OutfitComposerProps {
 export default function OutfitComposer({
   characterId,
   garmentId,
+  layerVisibility,
   className = "",
   showLayerBadge = true,
   onGarmentLoaded,
@@ -221,9 +223,13 @@ export default function OutfitComposer({
   // If garmentId was set to null/empty, clear garment state when active
   const effectiveGarment = garmentId ? garment : null;
 
-  // Filter and sort active garment layers by renderOrder
+  // Filter and sort active garment layers by renderOrder and layerVisibility
   const activeLayers = (effectiveGarment?.layers || [])
-    .filter((layer) => layer.visible !== false)
+    .filter((layer) => {
+      if (layer.visible === false) return false;
+      if (layerVisibility && layerVisibility[layer.layerId] === false) return false;
+      return true;
+    })
     .sort((a, b) => (a.renderOrder ?? 10) - (b.renderOrder ?? 10));
 
   return (
