@@ -1,43 +1,148 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 import OutfitComposer from "@/components/OutfitComposer";
 import { garmentCatalog, getGarment, occasionSuggestions, pendingCulturalCopy } from "@/lib/viet-phuc/catalog";
-import { createOutfit, selectGarment, selectVariant, toggleAccessory, visibleLayerIds } from "@/lib/viet-phuc/outfit-state";
+import { createOutfit, selectGarment, toggleAccessory, visibleLayerIds } from "@/lib/viet-phuc/outfit-state";
 import type { OutfitState } from "@/lib/viet-phuc/types";
 
+type View = "gallery" | "room" | "result";
+const roomImages: Record<string, string> = {
+  "ao_dai/red": "/assets/approved/scenes/ao_dai/background.png",
+  "nhat_binh/royal_blue": "/assets/approved/scenes/nhat_binh/background.png",
+  "giao_linh/emerald": "/assets/approved/scenes/giao_linh/background.png",
+};
+const foregroundImage = "/assets/approved/scenes/ao_dai/foreground.png";
+const previews: Record<string, string> = {
+  "ao_dai/red": "/assets/approved/garments/ao_dai/red/torso.png",
+  "nhat_binh/royal_blue": "/assets/garments/nhat_binh/royal_blue/torso.png",
+  "giao_linh/emerald": "/assets/garments/giao_linh/emerald/torso.png",
+};
+const numbers = ["01", "02", "03"];
+
 export default function Home() {
+  const [view, setView] = useState<View>("gallery");
   const [outfit, setOutfit] = useState<OutfitState>(() => createOutfit("ao_dai/red")!);
+  const [occasionOpen, setOccasionOpen] = useState(false);
+  const [occasionId, setOccasionId] = useState<string | null>(null);
+  const [aoDaiColor, setAoDaiColor] = useState<"red" | "indigo">("red");
+  const [motionReduced, setMotionReduced] = useState(false);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const foregroundRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setMotionReduced(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (!sceneRef.current || motionReduced) return;
+    const context = gsap.context(() => {
+      const timeline = gsap.timeline({ defaults: { ease: "power2.inOut" } });
+      timeline.fromTo(stageRef.current, { opacity: 0.55, scale: view === "gallery" ? 1.055 : 0.94, xPercent: view === "gallery" ? 2 : -3 }, { opacity: 1, scale: 1, xPercent: 0, duration: 0.6 }, 0);
+      timeline.fromTo(foregroundRef.current, { opacity: 0, xPercent: view === "gallery" ? -3 : 3 }, { opacity: 1, xPercent: 0, duration: 0.6 }, 0.1);
+      timeline.fromTo(".scene-enter", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.36, stagger: 0.055 }, 0.3);
+    }, sceneRef);
+    return () => context.revert();
+  }, [view, outfit.garmentId, motionReduced]);
+
+  useEffect(() => {
+    if (view !== "gallery") headingRef.current?.focus();
+  }, [view]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (occasionOpen) setOccasionOpen(false);
+      else if (view === "result") setView("room");
+      else if (view === "room") setView("gallery");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [occasionOpen, view]);
+
   const garment = getGarment(outfit.garmentId)!;
+  const roomImage = roomImages[outfit.garmentId];
   const visibleIds = visibleLayerIds(outfit);
   const layerVisibility = Object.fromEntries(garment.optionalAccessories.map((item) => [item.id, visibleIds.includes(item.id)]));
-  const buttonClass = "min-h-11 min-w-11 rounded-lg border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300";
+  const filtered = occasionId ? garmentCatalog.filter((item) => occasionSuggestions.find((occasion) => occasion.id === occasionId)?.garmentIds.includes(item.id)) : garmentCatalog;
+  const occasionName = occasionSuggestions.find((occasion) => occasion.id === occasionId)?.displayName;
+
+  function openRoom(id: string) {
+    setOutfit((current) => selectGarment(current, id));
+    setOccasionOpen(false);
+    setView("room");
+  }
 
   return (
-    <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col font-sans">
-      <header className="border-b border-amber-500/15 bg-black/60 px-6 py-4">
-        <div className="max-w-7xl mx-auto"><h1 className="text-lg font-semibold">Việt Phục Remix</h1><p className="text-sm text-zinc-300 mt-1">Thử trang phục qua minh họa anime</p></div>
+    <div className="atelier-app">
+      <header className="site-header">
+        <button className="brand" type="button" onClick={() => setView("gallery")} aria-label="Về phòng trưng bày">
+          <span className="brand-mark">V<span>•</span>P</span>
+          <span className="brand-name">VIỆT PHỤC <em>REMIX</em></span>
+        </button>
+        <nav className="top-nav" aria-label="Điều hướng chính">
+          <span className="top-nav-label">TRẢI NGHIỆM TƯƠNG TÁC</span>
+          <button className="top-nav-button" type="button" onClick={() => setView("gallery")}>Bộ sưu tập</button>
+          <button className="top-nav-button occasion-trigger" type="button" aria-expanded={occasionOpen} onClick={() => setOccasionOpen((open) => !open)}>Chọn theo dịp <span aria-hidden="true">⌄</span></button>
+        </nav>
       </header>
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        <section className="w-full lg:w-1/2 flex flex-col items-center" aria-label="Bản phối trang phục">
-          <div className="w-full max-w-[500px]">
-            <OutfitComposer characterId="base_01" garmentId={outfit.garmentId} layerVisibility={layerVisibility} />
-            <div className="mt-5 p-2 rounded-xl bg-zinc-900/70 border border-white/10 flex flex-wrap gap-2" role="group" aria-label="Chọn trang phục">
-              {garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={outfit.garmentId === item.id} className={`${buttonClass} flex-1 ${outfit.garmentId === item.id ? "border-amber-300 bg-zinc-800 text-white" : "border-zinc-600 text-zinc-200"}`} onClick={() => setOutfit((current) => selectGarment(current, item.id))}>{item.shortName}</button>)}
-            </div>
-            <fieldset className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-amber-500/20">
-              <legend className="px-2 text-sm font-semibold">Phụ kiện của {garment.shortName}</legend>
-              <div className="flex flex-col gap-2">{garment.optionalAccessories.map((accessory) => <label key={accessory.id} className="flex items-center gap-3 min-h-11 rounded-lg border border-zinc-600 px-3 py-2 cursor-pointer"><input type="checkbox" checked={outfit.accessoryIds.includes(accessory.id)} onChange={() => setOutfit((current) => toggleAccessory(current, accessory.id))} className="h-5 w-5 accent-amber-300" /><span className="text-sm">{accessory.displayName}</span></label>)}</div>
-            </fieldset>
-            <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-zinc-700" role="group" aria-label="Màu trang phục"><p className="text-sm mb-2">Màu có sẵn</p>{garment.variants.map((variant) => <button key={variant.id} type="button" className={`${buttonClass} border-amber-300`} aria-pressed={outfit.variantId === variant.id} onClick={() => setOutfit((current) => selectVariant(current, variant.id))}>{variant.displayName}</button>)}</div>
+      {occasionOpen && <div className="occasion-menu" role="group" aria-label="Chọn theo dịp">
+        <p>GỢI Ý PHỐI ĐỒ ĐƯƠNG ĐẠI</p>
+        {occasionSuggestions.map((occasion) => <button key={occasion.id} type="button" onClick={() => { setOccasionId(occasion.id); setOccasionOpen(false); setView("gallery"); }}>{occasion.displayName}<span aria-hidden="true">↗</span></button>)}
+        {occasionId && <button type="button" onClick={() => { setOccasionId(null); setOccasionOpen(false); }}>Xem tất cả trang phục <span aria-hidden="true">×</span></button>}
+      </div>}
+      <main ref={sceneRef} className={`main-scene view-${view}`}>
+        <div className="scene-art" ref={stageRef} style={{ backgroundImage: `url(${roomImage})` }} aria-hidden="true" />
+        <div className="scene-tint" aria-hidden="true" />
+        <div className="scene-foreground" ref={foregroundRef} style={{ backgroundImage: `url(${foregroundImage})` }} aria-hidden="true" />
+        {view === "gallery" ? <>
+          <section className="gallery-intro scene-enter">
+            <span className="eyebrow"><i /> KHÔNG GIAN VIỆT PHỤC · 2026</span>
+            <h1 ref={headingRef}>Di sản trong<br /><em>nhịp sống mới.</em></h1>
+            <p>Khám phá, thử phối và kể câu chuyện của bạn qua những dáng áo Việt.</p>
+            {occasionName && <button className="occasion-chip" type="button" onClick={() => setOccasionId(null)}>Dịp: {occasionName} <span aria-hidden="true">×</span></button>}
+          </section>
+          <section className="gallery-grid" aria-label="Chọn trang phục">
+            {filtered.map((item) => <button className="garment-card scene-enter" key={item.id} type="button" aria-label={item.shortName} onClick={() => openRoom(item.id)}>
+              <span className="card-index">{numbers[garmentCatalog.findIndex((entry) => entry.id === item.id)]}</span>
+              <span className="card-figure" style={{ backgroundImage: `url(${previews[item.id]})` }} aria-hidden="true" />
+              <span className="card-content"><span className="card-caption">KHÁM PHÁ TRANG PHỤC</span><strong>{item.shortName}</strong><span className="card-link">Bước vào phòng thử <b aria-hidden="true">↗</b></span></span>
+            </button>)}
+          </section>
+          <div className="gallery-foot scene-enter"><span>CHẠM VÀO TRANG PHỤC ĐỂ BẮT ĐẦU</span><span>CUỘN ĐỂ KHÁM PHÁ ↓</span></div>
+        </> : <div className="room-layout">
+          <div className="room-visual scene-enter">
+            <button className="back-button" type="button" onClick={() => setView("gallery")}>← <span>Về phòng trưng bày</span></button>
+            <span className="room-number">PHÒNG THỬ / {numbers[garmentCatalog.findIndex((item) => item.id === garment.id)]}</span>
+            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} approvedVariant={outfit.garmentId === "ao_dai/red" ? aoDaiColor : undefined} layerVisibility={layerVisibility} className="atelier-composer" /></div>
+            <span className="stage-caption">MINH HỌA PHỐI ĐỒ · PHONG CÁCH ANIME</span>
           </div>
-        </section>
-        <section className="w-full lg:w-1/2 flex flex-col gap-6" aria-label="Thông tin trang phục">
-          <div className="p-6 rounded-2xl bg-zinc-900/40 border border-amber-500/15"><h2 className="text-2xl sm:text-3xl font-serif">{garment.shortName}</h2><p className="mt-3 text-sm leading-relaxed text-zinc-200">{pendingCulturalCopy}</p></div>
-          <div className="p-6 rounded-2xl bg-zinc-900/30 border border-zinc-700"><h3 className="text-lg font-semibold">Gợi ý theo dịp</h3><p className="mt-2 text-sm text-zinc-300">Gợi ý phối đồ đương đại</p><ul className="mt-4 space-y-4">{occasionSuggestions.filter((occasion) => occasion.garmentIds.includes(outfit.garmentId)).map((occasion) => <li key={occasion.id}><h4 className="font-medium">{occasion.displayName}</h4><p className="text-sm text-zinc-300 mt-1">{occasion.rationale}</p></li>)}</ul></div>
-        </section>
+          <section className="style-panel scene-enter" aria-label="Điều chỉnh bản phối">
+            <span className="eyebrow"><i /> XƯỞNG PHỐI ĐỒ VIỆT</span>
+            <h1 ref={headingRef} tabIndex={-1}>{view === "result" ? "Bản phối của bạn" : garment.shortName}</h1>
+            <p className="panel-lead">{view === "result" ? "Một góc nhìn mới, được phối theo phong cách của riêng bạn." : "Chọn chi tiết bạn thích và xem trang phục thay đổi ngay trên nhân vật."}</p>
+            {view === "room" ? <>
+              <div className="control-section"><div className="section-heading"><span>01</span><h2>Trang phục</h2></div><div className="garment-switch" role="group" aria-label="Loại trang phục">{garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={item.id === outfit.garmentId} onClick={() => setOutfit((current) => selectGarment(current, item.id))}>{item.shortName}</button>)}</div></div>
+              <div className="control-section"><div className="section-heading"><span>02</span><h2>Màu sắc</h2></div><div className="color-options" role="group" aria-label="Màu trang phục">{outfit.garmentId === "ao_dai/red" ? <><button className="color-option" type="button" aria-pressed={aoDaiColor === "red"} onClick={() => setAoDaiColor("red")}><span className="color-swatch" />Đỏ son</button><button className="color-option" type="button" aria-pressed={aoDaiColor === "indigo"} onClick={() => setAoDaiColor("indigo")}><span className="color-swatch swatch-royal_blue" />Lam chàm</button></> : garment.variants.map((variant) => <button key={variant.id} className="color-option" type="button" aria-pressed={variant.id === outfit.variantId}><span className={`color-swatch swatch-${variant.id}`} />{variant.displayName}</button>)}</div></div>
+              <div className="control-section"><div className="section-heading"><span>03</span><h2>Phụ kiện</h2></div><div className="accessory-options">{garment.optionalAccessories.map((accessory) => <label key={accessory.id}><input type="checkbox" checked={outfit.accessoryIds.includes(accessory.id)} onChange={() => setOutfit((current) => toggleAccessory(current, accessory.id))} /><span className="accessory-check" aria-hidden="true">✓</span><span>{accessory.displayName}</span></label>)}</div></div>
+              <button className="primary-action" type="button" onClick={() => setView("result")}>Xem bản phối <span aria-hidden="true">↗</span></button>
+            </> : <>
+              <div className="result-summary"><span className="summary-kicker">BẢN PHỐI HIỆN TẠI</span><strong>{garment.shortName}</strong><p>Màu: {outfit.garmentId === "ao_dai/red" ? (aoDaiColor === "red" ? "Đỏ son" : "Lam chàm") : garment.variants.find((variant) => variant.id === outfit.variantId)?.displayName}</p><p>Phụ kiện: {outfit.accessoryIds.length ? garment.optionalAccessories.filter((item) => outfit.accessoryIds.includes(item.id)).map((item) => item.displayName).join(", ") : "Không chọn"}</p></div>
+              <button className="primary-action" type="button" onClick={() => setView("room")}>Tiếp tục phối <span aria-hidden="true">↗</span></button>
+            </>}
+            <aside className="culture-note"><span>GHI CHÚ VĂN HÓA</span><p>{pendingCulturalCopy}</p></aside>
+          </section>
+        </div>}
       </main>
-      <footer className="border-t border-zinc-800 bg-black/80 px-6 py-6 text-center text-sm text-zinc-300">Việt Phục Remix · Không gian thử trang phục minh họa</footer>
+      <footer className="site-footer"><span>VIỆT PHỤC REMIX</span><span>Khám phá vẻ đẹp Việt qua góc nhìn mới</span><span>© 2026</span></footer>
     </div>
   );
 }

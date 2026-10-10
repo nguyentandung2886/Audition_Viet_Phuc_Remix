@@ -1,0 +1,83 @@
+{
+  "garmentId": "nhat_binh/royal_blue",
+  "name": "Áo Nhật Bình Sắc Lam Hoàng Triều",
+  "characterId": "base_01",
+  "garmentType": "nhat_binh",
+  "dynasty": "Triều Nguyễn (1802 - 1945)",
+  "gender": "nu",
+  "description": "Áo Nhật Bình sắc lam quý phái với cổ áo hình chữ nhật thêu hoa sen và phượng hoàng, tay áo ngũ sắc đại diện ngũ hành và tà áo thêu sóng thủy ba cung đình, phối cùng khăn vành vàng-lam và thẻ bài ngọc bội hoàng gia.",
+  "historicalFact": "Áo Nhật Bình là lễ phục và thường phục cao quý của bậc Hoàng hậu, Công chúa và mệnh phụ triều đình nhà Nguyễn. Điểm đặc trưng nhất là dải cổ áo lớn đóng kín trước ngực tạo thành hình chữ nhật ('Nhật Bình'), cổ tay áo thêu dải ngũ sắc (đỏ, vàng, xanh, trắng, lục) biểu trưng cho ngũ hành tương sinh.",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "renderOrder": 10,
+  "layers": [
+    {
+      "layerId": "pants",
+      "name": "Quần Lụa Trắng Cung Đình",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "assetPath": "/assets/garments/nhat_binh/royal_blue/pants.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "torso",
+      "name": "Áo Nhật Bình Ngũ Sắc",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "assetPath": "/assets/garments/nhat_binh/royal_blue/torso.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "necklace",
+      "name": "Thẻ Bài Ngọc Bội Hoa Sen",
+      "componentType": "accessory",
+      "renderOrder": 50,
+      "assetPath": "/assets/garments/nhat_binh/royal_blue/necklace.png",
+      "visible": true,
+      "isOptional": true
+    },
+    {
+      "layerId": "headpiece",
+      "name": "Khăn Vành Hoàng Gia",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "assetPath": "/assets/garments/nhat_binh/royal_blue/headpiece.png",
+      "visible": true,
+      "isOptional": true
+    }
+  ],
+  "components": [
+    {
+      "assetId": "nhat_binh_pants",
+      "name": "Quần Lụa Trắng Cung Đình",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "filePath": "/assets/garments/nhat_binh/royal_blue/pants.png"
+    },
+    {
+      "assetId": "nhat_binh_torso",
+      "name": "Áo Nhật Bình Ngũ Sắc",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "filePath": "/assets/garments/nhat_binh/royal_blue/torso.png"
+    },
+    {
+      "assetId": "nhat_binh_necklace",
+      "name": "Thẻ Bài Ngọc Bội Hoa Sen",
+      "componentType": "necklace",
+      "renderOrder": 50,
+      "filePath": "/assets/garments/nhat_binh/royal_blue/necklace.png"
+    },
+    {
+      "assetId": "nhat_binh_headpiece",
+      "name": "Khăn Vành Hoàng Gia",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "filePath": "/assets/garments/nhat_binh/royal_blue/headpiece.png"
+    }
+  ]
+}

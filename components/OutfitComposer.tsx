@@ -13,6 +13,7 @@ export interface CharacterMetadata {
 export interface OutfitComposerProps {
   characterId: string;
   garmentId?: string | null;
+  approvedVariant?: "red" | "indigo";
   layerVisibility?: Record<string, boolean>;
   className?: string;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
@@ -24,9 +25,9 @@ interface ImageState {
   retained: RetainedPreview | null;
 }
 
-export default function OutfitComposer({ characterId, garmentId, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
+export default function OutfitComposer({ characterId, garmentId, approvedVariant, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
   const [retry, setRetry] = useState(0);
-  const selectionKey = `${characterId}:${garmentId}:${retry}`;
+  const selectionKey = `${characterId}:${garmentId}:${approvedVariant ?? "legacy"}:${retry}`;
   const [request, setRequest] = useState({ selectionKey, generation: 0 });
   // Adjust during render so returning to an earlier ID cannot briefly restore its frame.
   if (request.selectionKey !== selectionKey) {
@@ -92,7 +93,10 @@ export default function OutfitComposer({ characterId, garmentId, layerVisibility
   const metadata = metadataForSelection(loaded?.key === requestKey ? loaded.metadata : null, garmentId);
   const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "error"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], error: false };
   const activeLayers = (metadata?.layers ?? []).filter((layer) => !layer.isOptional ||
-    (layer.visible && layerVisibility?.[layer.layerId] !== false && !frame.failedAccessoryIds.includes(layer.layerId)));
+    (layer.visible && layerVisibility?.[layer.layerId] !== false && !frame.failedAccessoryIds.includes(layer.layerId)))
+    .map((layer) => garmentId === "ao_dai/red" && approvedVariant
+      ? { ...layer, assetPath: `/assets/approved/garments/ao_dai/${approvedVariant}/${layer.layerId}.png` }
+      : layer);
   const characterPath = character?.characterId === characterId ? character.assetPath : null;
   const ready = Boolean(metadata && characterPath && !frame.error && ["character", "pants", "torso"].every((id) => frame.loadedIds.includes(id)));
   const error = (loaded?.key === requestKey && loaded.error) || frame.error || characterId !== "base_01";
@@ -102,7 +106,7 @@ export default function OutfitComposer({ characterId, garmentId, layerVisibility
     const completeLayers = activeLayers.filter((layer) => frame.loadedIds.includes(layer.layerId));
     const snapshot = images.retained;
     if (!snapshot || snapshot.garmentId !== metadata.garmentId || snapshot.characterPath !== characterPath ||
-      snapshot.layers.length !== completeLayers.length || snapshot.layers.some((layer, index) => layer !== completeLayers[index])) {
+      snapshot.layers.length !== completeLayers.length || snapshot.layers.some((layer, index) => layer.assetPath !== completeLayers[index].assetPath)) {
       // Visibility changes have no image event; remember the latest complete visible outfit.
       setImages({ ...images, retained: { garmentId: metadata.garmentId, name: metadata.name, characterPath, layers: completeLayers } });
     }
