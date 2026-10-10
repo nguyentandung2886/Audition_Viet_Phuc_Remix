@@ -28,3 +28,6 @@ next-env.d.ts
 /public/assets/
 
 scripts/pipeline/temp_processing/
+
+# Isolated agent workspaces
+.worktrees/
