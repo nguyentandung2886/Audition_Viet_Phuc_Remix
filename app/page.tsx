@@ -19,14 +19,25 @@ const previews: Record<string, string> = {
   "nhat_binh/royal_blue": "/assets/garments/nhat_binh/royal_blue/torso.png",
   "giao_linh/emerald": "/assets/garments/giao_linh/emerald/torso.png",
 };
+const originalSwatches: Record<string, string> = {
+  "ao_dai/red": "linear-gradient(135deg,#963e50,#d99076)",
+  "nhat_binh/royal_blue": "linear-gradient(135deg,#354d80,#7388ad)",
+  "giao_linh/emerald": "linear-gradient(135deg,#356557,#70a08b)",
+};
 const numbers = ["01", "02", "03"];
+const colorPresets = [
+  { id: "original", label: "Nguyên bản", filter: "none" },
+  { id: "warm", label: "Sắc ấm", filter: "sepia(.22) saturate(1.28) hue-rotate(-12deg) brightness(1.03)" },
+  { id: "cool", label: "Sắc lạnh", filter: "sepia(.16) saturate(1.18) hue-rotate(38deg) brightness(1.01)" },
+] as const;
+type ColorPresetId = (typeof colorPresets)[number]["id"];
 
 export default function Home() {
   const [view, setView] = useState<View>("gallery");
   const [outfit, setOutfit] = useState<OutfitState>(() => createOutfit("ao_dai/red")!);
   const [occasionOpen, setOccasionOpen] = useState(false);
   const [occasionId, setOccasionId] = useState<string | null>(null);
-  const [aoDaiColor, setAoDaiColor] = useState<"red" | "indigo">("red");
+  const [colorPresetId, setColorPresetId] = useState<ColorPresetId>("original");
   const [motionReduced, setMotionReduced] = useState(false);
   const sceneRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -77,9 +88,17 @@ export default function Home() {
 
   function openRoom(id: string) {
     setOutfit((current) => selectGarment(current, id));
+    setColorPresetId("original");
     setOccasionOpen(false);
     setView("room");
   }
+
+  function changeGarment(id: string) {
+    setOutfit((current) => selectGarment(current, id));
+    setColorPresetId("original");
+  }
+
+  const colorPreset = colorPresets.find((preset) => preset.id === colorPresetId)!;
 
   return (
     <div className="atelier-app">
@@ -122,7 +141,7 @@ export default function Home() {
           <div className="room-visual scene-enter">
             <button className="back-button" type="button" onClick={() => setView("gallery")}>← <span>Về phòng trưng bày</span></button>
             <span className="room-number">PHÒNG THỬ / {numbers[garmentCatalog.findIndex((item) => item.id === garment.id)]}</span>
-            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} approvedVariant={outfit.garmentId === "ao_dai/red" && aoDaiColor === "indigo" ? "indigo" : undefined} layerVisibility={layerVisibility} className="atelier-composer" /></div>
+            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} garmentFilter={colorPreset.filter} layerVisibility={layerVisibility} className="atelier-composer" /></div>
             <span className="stage-caption">MINH HỌA PHỐI ĐỒ · PHONG CÁCH ANIME</span>
           </div>
           <section className="style-panel scene-enter" aria-label="Điều chỉnh bản phối">
@@ -130,12 +149,12 @@ export default function Home() {
             <h1 ref={headingRef} tabIndex={-1}>{view === "result" ? "Bản phối của bạn" : garment.shortName}</h1>
             <p className="panel-lead">{view === "result" ? "Một góc nhìn mới, được phối theo phong cách của riêng bạn." : "Chọn chi tiết bạn thích và xem trang phục thay đổi ngay trên nhân vật."}</p>
             {view === "room" ? <>
-              <div className="control-section"><div className="section-heading"><span>01</span><h2>Trang phục</h2></div><div className="garment-switch" role="group" aria-label="Loại trang phục">{garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={item.id === outfit.garmentId} onClick={() => setOutfit((current) => selectGarment(current, item.id))}>{item.shortName}</button>)}</div></div>
-              <div className="control-section"><div className="section-heading"><span>02</span><h2>Màu sắc</h2></div><div className="color-options" role="group" aria-label="Màu trang phục">{outfit.garmentId === "ao_dai/red" ? <><button className="color-option" type="button" aria-pressed={aoDaiColor === "red"} onClick={() => setAoDaiColor("red")}><span className="color-swatch" />Đỏ son</button><button className="color-option" type="button" aria-pressed={aoDaiColor === "indigo"} onClick={() => setAoDaiColor("indigo")}><span className="color-swatch swatch-royal_blue" />Lam chàm</button></> : garment.variants.map((variant) => <button key={variant.id} className="color-option" type="button" aria-pressed={variant.id === outfit.variantId}><span className={`color-swatch swatch-${variant.id}`} />{variant.displayName}</button>)}</div></div>
+              <div className="control-section"><div className="section-heading"><span>01</span><h2>Trang phục</h2></div><div className="garment-switch" role="group" aria-label="Loại trang phục">{garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={item.id === outfit.garmentId} onClick={() => changeGarment(item.id)}>{item.shortName}</button>)}</div></div>
+              <div className="control-section"><div className="section-heading"><span>02</span><h2>Màu sắc</h2></div><div className="color-options" role="group" aria-label="Màu trang phục">{colorPresets.map((preset) => <button key={preset.id} className={`color-option color-${preset.id}`} type="button" aria-pressed={preset.id === colorPresetId} onClick={() => setColorPresetId(preset.id)}><span className="color-swatch" style={preset.id === "original" ? { background: originalSwatches[outfit.garmentId] } : undefined} aria-hidden="true" />{preset.label}</button>)}</div><p className="color-note">Màu phối minh họa trực tiếp, không thay đổi hoa văn gốc.</p></div>
               <div className="control-section"><div className="section-heading"><span>03</span><h2>Phụ kiện</h2></div><div className="accessory-options">{garment.optionalAccessories.map((accessory) => <label key={accessory.id}><input type="checkbox" checked={outfit.accessoryIds.includes(accessory.id)} onChange={() => setOutfit((current) => toggleAccessory(current, accessory.id))} /><span className="accessory-check" aria-hidden="true">✓</span><span>{accessory.displayName}</span></label>)}</div></div>
               <button className="primary-action" type="button" onClick={() => setView("result")}>Xem bản phối <span aria-hidden="true">↗</span></button>
             </> : <>
-              <div className="result-summary"><span className="summary-kicker">BẢN PHỐI HIỆN TẠI</span><strong>{garment.shortName}</strong><p>Màu: {outfit.garmentId === "ao_dai/red" ? (aoDaiColor === "red" ? "Đỏ son" : "Lam chàm") : garment.variants.find((variant) => variant.id === outfit.variantId)?.displayName}</p><p>Phụ kiện: {outfit.accessoryIds.length ? garment.optionalAccessories.filter((item) => outfit.accessoryIds.includes(item.id)).map((item) => item.displayName).join(", ") : "Không chọn"}</p></div>
+              <div className="result-summary"><span className="summary-kicker">BẢN PHỐI HIỆN TẠI</span><strong>{garment.shortName}</strong><p>Màu minh họa: {colorPreset.label}</p><p>Phụ kiện: {outfit.accessoryIds.length ? garment.optionalAccessories.filter((item) => outfit.accessoryIds.includes(item.id)).map((item) => item.displayName).join(", ") : "Không chọn"}</p></div>
               <button className="primary-action" type="button" onClick={() => setView("room")}>Tiếp tục phối <span aria-hidden="true">↗</span></button>
             </>}
             <aside className="culture-note"><span>GHI CHÚ VĂN HÓA</span><p>{pendingCulturalCopy}</p></aside>

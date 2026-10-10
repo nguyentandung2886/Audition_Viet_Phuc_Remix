@@ -307,7 +307,6 @@ async function writeGarmentVariants() {
   }
   const variants = [
     { id: "red", label: "Đỏ son", color: { r: 141, g: 61, b: 80 } },
-    { id: "indigo", label: "Lam chàm", color: { r: 53, g: 77, b: 128 } },
   ];
 
   for (const variant of variants) {

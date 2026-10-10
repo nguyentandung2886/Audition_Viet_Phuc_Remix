@@ -104,9 +104,9 @@ public/assets/scenes/ao_dai/scene.json
 }
 ```
 
-### 4.2 Hai màu áo dài
+### 4.2 Màu áo dài
 
-Giữ ID hiện có `ao_dai/red`; thêm biến thể `ao_dai/indigo` ở bước schema/runtime sau.
+Giữ ID và asset gốc `ao_dai/red`. Các sắc độ minh họa được xử lý trực tiếp trên lớp thân áo ở runtime, không tạo thêm biến thể asset.
 
 ```text
 public/assets/garments/ao_dai/red/pants.png
@@ -115,16 +115,10 @@ public/assets/garments/ao_dai/red/necklace.png
 public/assets/garments/ao_dai/red/headpiece.png
 public/assets/garments/ao_dai/red/garment.json
 
-public/assets/garments/ao_dai/indigo/pants.png
-public/assets/garments/ao_dai/indigo/torso.png
-public/assets/garments/ao_dai/indigo/necklace.png
-public/assets/garments/ao_dai/indigo/headpiece.png
-public/assets/garments/ao_dai/indigo/garment.json
 ```
 
 - `red`: nhãn UI đề xuất **Đỏ son**, màu chủ đạo gần Lacquer `#8D3D50`; quần Porcelain. Không gắn ý nghĩa lịch sử cho màu.
-- `indigo`: nhãn UI đề xuất **Lam chàm**, màu chủ đạo gần Indigo `#354D80`; quần Porcelain. Đây là lựa chọn phối đương đại cho demo.
-- Hình dáng, nếp gấp và motif giữa hai màu phải trùng nhau ở cấp pixel; chỉ vùng vật liệu/màu được thay đổi. Không dùng CSS `hue-rotate`.
+- Preset màu runtime chỉ áp dụng lên lớp `torso`, giữ nguyên alpha, hình dáng, họa tiết, quần và phụ kiện.
 - Hai phụ kiện: **Kiềng bạc tối giản** (`necklace`) và **mấn đồng màu** (`headpiece`). Tên cuối cùng cần người duyệt văn hóa xác nhận; không dùng từ “hoàng gia”, triều đại hoặc phẩm cấp khi chưa có nguồn.
 
 ## 5. Quy trình tạo và prompt chuẩn

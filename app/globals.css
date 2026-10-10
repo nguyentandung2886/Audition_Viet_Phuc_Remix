@@ -14,3 +14,12 @@
 @media(max-width:640px){.site-header{height:64px;padding:0 15px}.brand{gap:8px}.brand-mark{width:34px;height:34px;font-size:11px}.brand-name{font-size:10px;letter-spacing:.1em}.top-nav{gap:6px}.top-nav-button{font-size:10px;padding:0 7px}.occasion-trigger{padding:0 7px}.occasion-trigger span{margin-left:4px}.main-scene{min-height:calc(100svh - 110px)}.gallery-intro{padding-top:32px}.gallery-intro h1{font-size:43px}.gallery-intro p{font-size:13px}.gallery-grid{grid-template-columns:1fr;width:calc(100% - 28px);margin-top:14px;gap:10px}.garment-card{min-height:180px}.card-figure{inset:0 40% 0 3%;background-position:center}.card-content{inset:0 0 0 45%;justify-content:center;background:linear-gradient(90deg,transparent,#f5f8f6d9 15%,#f5f8f6ef);padding:12px}.card-content strong{font-size:23px;margin:6px 0}.card-caption{font-size:8px}.gallery-foot{width:calc(100% - 28px);margin:18px auto 25px;font-size:8px}.gallery-foot span:last-child{display:none}.room-visual{min-height:520px}.character-stage{width:min(72vw,330px);height:460px}.room-number{top:82px;right:16px}.back-button{top:18px;left:15px}.style-panel{display:block;padding:30px 22px}.scene-art{background-position:center}.view-room .scene-tint,.view-result .scene-tint{background:#e9f0f1a3}.site-footer{min-height:46px;padding:0 15px;font-size:8px}.site-footer span:nth-child(2){display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .color-option[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}.color-option[aria-pressed="false"]{border-color:#cbd7dc}.atelier-composer img[data-testid^="garment-layer-"]{animation:layer-appear .36s ease both}@keyframes layer-appear{from{opacity:.25}to{opacity:1}}
+
+/* Runtime garment color presets */
+.color-option{transition:transform .16s ease,border-color .2s ease,box-shadow .2s ease}
+.color-option:active{transform:scale(.97)}
+.color-swatch{background:linear-gradient(135deg,#963e50,#d99076);box-shadow:inset 0 0 0 1px #fff8}
+.color-warm .color-swatch{background:linear-gradient(135deg,#a85843,#d9a35d)}
+.color-cool .color-swatch{background:linear-gradient(135deg,#466d82,#789aa4)}
+.color-note{margin:10px 0 0;color:#526875;font-size:12px;line-height:1.5}
+.atelier-composer img[data-testid^="garment-layer-"]{transition:filter .48s cubic-bezier(.4,0,.2,1)}

@@ -13,21 +13,21 @@ export interface CharacterMetadata {
 export interface OutfitComposerProps {
   characterId: string;
   garmentId?: string | null;
-  approvedVariant?: "red" | "indigo";
+  garmentFilter?: string;
   layerVisibility?: Record<string, boolean>;
   className?: string;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
   onCharacterLoaded?: (character: CharacterMetadata | null) => void;
 }
-interface RetainedPreview { garmentId: string; name: string; characterPath: string; layers: GarmentLayer[] }
+interface RetainedPreview { garmentId: string; name: string; characterPath: string; layers: GarmentLayer[]; garmentFilter: string }
 interface ImageState {
   key: string; loadedIds: string[]; failedAccessoryIds: string[]; error: boolean;
   retained: RetainedPreview | null;
 }
 
-export default function OutfitComposer({ characterId, garmentId, approvedVariant, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
+export default function OutfitComposer({ characterId, garmentId, garmentFilter = "none", layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
   const [retry, setRetry] = useState(0);
-  const selectionKey = `${characterId}:${garmentId}:${approvedVariant ?? "legacy"}:${retry}`;
+  const selectionKey = `${characterId}:${garmentId}:${retry}`;
   const [request, setRequest] = useState({ selectionKey, generation: 0 });
   // Adjust during render so returning to an earlier ID cannot briefly restore its frame.
   if (request.selectionKey !== selectionKey) {
@@ -93,10 +93,7 @@ export default function OutfitComposer({ characterId, garmentId, approvedVariant
   const metadata = metadataForSelection(loaded?.key === requestKey ? loaded.metadata : null, garmentId);
   const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "error"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], error: false };
   const activeLayers = (metadata?.layers ?? []).filter((layer) => !layer.isOptional ||
-    (layer.visible && layerVisibility?.[layer.layerId] !== false && !frame.failedAccessoryIds.includes(layer.layerId)))
-    .map((layer) => garmentId === "ao_dai/red" && approvedVariant
-      ? { ...layer, assetPath: `/assets/approved/garments/ao_dai/${approvedVariant}/${layer.layerId}.png` }
-      : layer);
+    (layer.visible && layerVisibility?.[layer.layerId] !== false && !frame.failedAccessoryIds.includes(layer.layerId)));
   const characterPath = character?.characterId === characterId ? character.assetPath : null;
   const ready = Boolean(metadata && characterPath && !frame.error && ["character", "pants", "torso"].every((id) => frame.loadedIds.includes(id)));
   const error = (loaded?.key === requestKey && loaded.error) || frame.error || characterId !== "base_01";
@@ -106,9 +103,9 @@ export default function OutfitComposer({ characterId, garmentId, approvedVariant
     const completeLayers = activeLayers.filter((layer) => frame.loadedIds.includes(layer.layerId));
     const snapshot = images.retained;
     if (!snapshot || snapshot.garmentId !== metadata.garmentId || snapshot.characterPath !== characterPath ||
-      snapshot.layers.length !== completeLayers.length || snapshot.layers.some((layer, index) => layer.assetPath !== completeLayers[index].assetPath)) {
+      snapshot.layers.length !== completeLayers.length || snapshot.garmentFilter !== garmentFilter || snapshot.layers.some((layer, index) => layer.assetPath !== completeLayers[index].assetPath)) {
       // Visibility changes have no image event; remember the latest complete visible outfit.
-      setImages({ ...images, retained: { garmentId: metadata.garmentId, name: metadata.name, characterPath, layers: completeLayers } });
+      setImages({ ...images, retained: { garmentId: metadata.garmentId, name: metadata.name, characterPath, layers: completeLayers, garmentFilter } });
     }
   }
 
@@ -119,7 +116,7 @@ export default function OutfitComposer({ characterId, garmentId, approvedVariant
       const complete = !current.error && metadata && characterPath && ["character", "pants", "torso"].every((id) => loadedIds.includes(id));
       return { ...current, loadedIds, retained: complete ? {
         garmentId: metadata.garmentId, name: metadata.name, characterPath,
-        layers: activeLayers.filter((layer) => loadedIds.includes(layer.layerId)),
+        layers: activeLayers.filter((layer) => loadedIds.includes(layer.layerId)), garmentFilter,
       } : current.retained };
     });
   }
@@ -139,13 +136,13 @@ export default function OutfitComposer({ characterId, garmentId, approvedVariant
       {retained && (
         <div className="absolute inset-0" role="img" aria-label={`Bản phối trước: ${retained.name}`} data-testid="retained-preview">
           <Image src={retained.characterPath} alt="" fill unoptimized sizes="540px" className="object-contain" />
-          {retained.layers.map((layer) => <Image key={layer.assetPath} src={layer.assetPath} alt="" fill unoptimized sizes="540px" className="object-contain" style={{ zIndex: layer.renderOrder }} />)}
+          {retained.layers.map((layer) => <Image key={layer.assetPath} src={layer.assetPath} alt="" fill unoptimized sizes="540px" className="object-contain" style={{ zIndex: layer.renderOrder, filter: layer.layerId === "torso" ? retained.garmentFilter : undefined }} />)}
         </div>
       )}
       <div className="absolute inset-0" style={{ visibility: ready ? "visible" : "hidden" }} aria-hidden={!ready}>
         {characterPath && <Image key={`${requestKey}:character`} src={characterPath} alt="Nhân vật minh họa" fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded("character")} onError={() => imageFailed(null)} className="object-contain" data-testid="base-character-layer" />}
         <div className="absolute inset-0 pointer-events-none" data-testid="garment-layers-container" data-garment-id={metadata?.garmentId}>
-          {activeLayers.map((layer) => <Image key={`${requestKey}:${layer.assetPath}`} src={layer.assetPath} alt={layer.name} fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded(layer.layerId)} onError={() => imageFailed(layer)} style={{ zIndex: layer.renderOrder }} className="object-contain" data-testid={`garment-layer-${layer.layerId}`} />)}
+          {activeLayers.map((layer) => <Image key={`${requestKey}:${layer.assetPath}`} src={layer.assetPath} alt={layer.name} fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded(layer.layerId)} onError={() => imageFailed(layer)} style={{ zIndex: layer.renderOrder, filter: layer.layerId === "torso" ? garmentFilter : undefined }} className="object-contain" data-testid={`garment-layer-${layer.layerId}`} />)}
         </div>
       </div>
       <div className="absolute inset-x-3 bottom-3 z-[70] rounded-lg bg-zinc-950/95 p-3 text-sm text-zinc-100" role="status" aria-live="polite">

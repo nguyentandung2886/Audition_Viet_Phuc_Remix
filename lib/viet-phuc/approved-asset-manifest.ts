@@ -33,7 +33,7 @@ export interface ApprovedSceneAssetManifest {
 export interface ApprovedGarmentAssetManifest {
   schemaVersion: 1;
   garmentId: "ao_dai";
-  variantId: "red" | "indigo";
+  variantId: "red";
   version: `v${number}`;
   canvas: { width: 1024; height: 1536 };
   normalizationBox: { left: number; top: number; right: number; bottom: number };
@@ -52,5 +52,4 @@ export interface ApprovedGarmentAssetManifest {
 export const APPROVED_AO_DAI_ASSET_MANIFESTS = {
   scene: "/assets/approved/scenes/ao_dai/scene.json",
   red: "/assets/approved/garments/ao_dai/red/garment.json",
-  indigo: "/assets/approved/garments/ao_dai/indigo/garment.json",
 } as const;

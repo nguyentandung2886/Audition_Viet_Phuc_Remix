@@ -16,12 +16,6 @@ const redManifestPath = asset(
   "red",
   "garment.json",
 );
-const indigoManifestPath = asset(
-  "garments",
-  "ao_dai",
-  "indigo",
-  "garment.json",
-);
 
 async function alphaChannel(filePath: string) {
   const { data, info } = await sharp(filePath)
@@ -80,18 +74,13 @@ describe("approved asset pipeline", () => {
     expect(corners.map((index) => alpha[index])).toEqual([0, 0, 0, 0]);
   });
 
-  it("publishes both colors with pixel-identical layer geometry", async () => {
+  it("publishes transparent garment layers in the canonical geometry", async () => {
     for (const layerId of ["pants", "torso", "necklace", "headpiece"]) {
       const red = await alphaChannel(
         asset("garments", "ao_dai", "red", `${layerId}.png`),
       );
-      const indigo = await alphaChannel(
-        asset("garments", "ao_dai", "indigo", `${layerId}.png`),
-      );
 
       expect([red.width, red.height]).toEqual([1024, 1536]);
-      expect([indigo.width, indigo.height]).toEqual([1024, 1536]);
-      expect(Buffer.compare(red.alpha, indigo.alpha)).toBe(0);
       const cornerIndexes = [
         0,
         red.width - 1,
@@ -137,10 +126,7 @@ describe("approved asset pipeline", () => {
   });
 
   it("records required garment manifest fields, files and pending cultural review", async () => {
-    for (const [manifestPath, variantId] of [
-      [redManifestPath, "red"],
-      [indigoManifestPath, "indigo"],
-    ] as const) {
+    for (const [manifestPath, variantId] of [[redManifestPath, "red"]] as const) {
       const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
       expect(manifest).toMatchObject({
         schemaVersion: 1,
