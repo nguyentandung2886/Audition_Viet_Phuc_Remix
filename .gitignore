@@ -25,7 +25,27 @@ next-env.d.ts
 .env*.local
 
 # Pipeline Generated Assets
-/public/assets/
+/public/assets/**
+!/public/assets/approved/
+!/public/assets/approved/scenes/
+!/public/assets/approved/scenes/ao_dai/
+!/public/assets/approved/scenes/ao_dai/background.png
+!/public/assets/approved/scenes/ao_dai/foreground.png
+!/public/assets/approved/scenes/ao_dai/scene.json
+!/public/assets/approved/garments/
+!/public/assets/approved/garments/ao_dai/
+!/public/assets/approved/garments/ao_dai/red/
+!/public/assets/approved/garments/ao_dai/red/pants.png
+!/public/assets/approved/garments/ao_dai/red/torso.png
+!/public/assets/approved/garments/ao_dai/red/necklace.png
+!/public/assets/approved/garments/ao_dai/red/headpiece.png
+!/public/assets/approved/garments/ao_dai/red/garment.json
+!/public/assets/approved/garments/ao_dai/indigo/
+!/public/assets/approved/garments/ao_dai/indigo/pants.png
+!/public/assets/approved/garments/ao_dai/indigo/torso.png
+!/public/assets/approved/garments/ao_dai/indigo/necklace.png
+!/public/assets/approved/garments/ao_dai/indigo/headpiece.png
+!/public/assets/approved/garments/ao_dai/indigo/garment.json
 
 scripts/pipeline/temp_processing/
 

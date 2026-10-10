@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "sceneId": "ao_dai",
+  "version": "v001",
+  "canvas": {
+    "width": 1600,
+    "height": 1000
+  },
+  "desktopCrop": {
+    "x": 0,
+    "y": 0,
+    "width": 1600,
+    "height": 1000
+  },
+  "mobileCrop": {
+    "x": 400,
+    "y": 0,
+    "width": 800,
+    "height": 1000
+  },
+  "characterBounds": {
+    "x": 584,
+    "y": 200,
+    "width": 432,
+    "height": 648
+  },
+  "layers": [
+    {
+      "layerId": "background",
+      "assetPath": "/assets/approved/scenes/ao_dai/background.png",
+      "renderOrder": 0,
+      "width": 1600,
+      "height": 1000,
+      "checksumSha256": "acc82c2b976e686c1e7f968c4e8bf586920a6e07853ad25f94096d48c80acc05"
+    },
+    {
+      "layerId": "foreground",
+      "assetPath": "/assets/approved/scenes/ao_dai/foreground.png",
+      "renderOrder": 30,
+      "width": 1600,
+      "height": 1000,
+      "checksumSha256": "7f28f95c373935ff48b82849ec36044a20cd0f5d9ebc36ff6ecdd4d448577d97"
+    }
+  ],
+  "provenance": {
+    "sourceTool": "built-in image_gen",
+    "sourceVersion": "room-background-v001 + room-foreground-v001",
+    "sourcePaths": [
+      "scripts/pipeline/temp_processing/ao-dai/room-background-v001.png",
+      "scripts/pipeline/temp_processing/ao-dai/room-foreground-v001.png"
+    ],
+    "processingPipeline": "scripts/pipeline/process-approved-assets.mjs"
+  },
+  "review": {
+    "status": "draft",
+    "technical": "pending",
+    "visual": "accepted-source-pending-derivative-review",
+    "cultural": "pending"
+  }
+}
