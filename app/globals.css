@@ -18,10 +18,48 @@
 /* Runtime garment color presets */
 .color-option{transition:transform .16s ease,border-color .2s ease,box-shadow .2s ease}
 .color-option:active{transform:scale(.97)}
-.color-swatch{background:linear-gradient(135deg,#963e50,#d99076);box-shadow:inset 0 0 0 1px #fff8}
+.color-swatch{background:linear-gradient(135deg,#963e50,#d99076);box-shadow:inset 0 0 0 1px #fff8;transition:transform .26s cubic-bezier(.2,.7,.2,1)}
 .color-warm .color-swatch{background:linear-gradient(135deg,#a85843,#d9a35d)}
 .color-cool .color-swatch{background:linear-gradient(135deg,#466d82,#789aa4)}
 .color-note{margin:10px 0 0;color:#526875;font-size:12px;line-height:1.5}
 .atelier-composer img[data-testid^="garment-layer-"]{transition:filter .48s cubic-bezier(.4,0,.2,1)}
 .layer-options{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
 .layer-options label{background:#edf3f2;border-color:#c6d5d7;font-weight:700}
+
+/* Cinematic room and interaction motion */
+.scene-transition{position:absolute;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
+.scene-plate{position:absolute;inset:0;transform-origin:50% 50%;backface-visibility:hidden}
+.scene-plate .scene-art,.scene-plate .scene-foreground{position:absolute;inset:-3%;background-size:cover;background-position:center 55%;pointer-events:none}
+.scene-plate .scene-art{z-index:0}
+.scene-plate .scene-foreground{z-index:1;background-position:center}
+.garment-motion-layer>img{animation:none!important;transition:filter .48s cubic-bezier(.4,0,.2,1)}
+.garment-switch button,.top-nav-button,.back-button,.occasion-menu button,.primary-action,.accessory-options label{position:relative;isolation:isolate;overflow:hidden;transition:transform .14s ease,color .26s ease,border-color .26s ease,background-color .26s ease,box-shadow .26s ease}
+.back-button{position:absolute}
+.garment-switch button::before{content:"";position:absolute;z-index:-1;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+.garment-switch button[aria-pressed="true"]{animation:option-settle .26s ease-out}
+.color-option[aria-pressed="true"] .color-swatch{animation:swatch-select .4s cubic-bezier(.2,.8,.2,1)}
+.accessory-check{transform:scale(.9);transition:transform .18s ease,background-color .18s ease,color .14s ease}
+.accessory-options input:checked+.accessory-check{animation:check-pop .26s cubic-bezier(.2,.8,.2,1)}
+.primary-action span,.back-button span,.occasion-menu button span{transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+@keyframes option-settle{0%{transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes swatch-select{0%{transform:scale(.78) rotate(-16deg);box-shadow:0 0 0 0 #45647f66}60%{transform:scale(1.12) rotate(5deg);box-shadow:0 0 0 6px #45647f18}100%{transform:scale(1) rotate(0);box-shadow:inset 0 0 0 1px #fff8}}
+@keyframes check-pop{0%{transform:scale(.72)}65%{transform:scale(1.12)}100%{transform:scale(1)}}
+@media(hover:hover){
+  .garment-card:hover{transform:translateY(-8px) rotate(.55deg);box-shadow:0 27px 48px #2742573d}
+  .garment-card:nth-child(even):hover{transform:translateY(-8px) rotate(-.55deg)}
+  .garment-switch button:hover::before{transform:scaleX(1)}
+  .garment-switch button:hover{color:#fff;border-color:var(--ink);transform:translateY(-2px)}
+  .color-option:hover{transform:translateY(-2px);box-shadow:0 8px 18px #2742571c}
+  .color-option:hover .color-swatch{transform:scale(1.12) rotate(8deg)}
+  .accessory-options label:hover{transform:translateX(2px);border-color:var(--jade);box-shadow:0 5px 14px #27425712}
+  .accessory-options label:hover .accessory-check{transform:scale(1.06)}
+  .primary-action:hover{transform:translateY(-2px);box-shadow:0 12px 22px #20375e28}
+  .primary-action:hover span{transform:translate(3px,-3px)}
+  .back-button:hover{transform:translateX(-3px);border-color:var(--ink)}
+  .back-button:hover span{transform:translateX(-2px)}
+  .top-nav-button:hover{color:var(--blue);transform:translateY(-1px)}
+  .occasion-menu button:hover{transform:translateX(4px);color:var(--blue)}
+  .occasion-menu button:hover span{transform:translate(3px,-3px)}
+}
+.primary-action:active,.back-button:active,.garment-switch button:active,.color-option:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.scene-plate,.garment-motion-layer{transform:none!important}.garment-switch button[aria-pressed="true"],.color-option[aria-pressed="true"] .color-swatch,.accessory-options input:checked+.accessory-check{animation:none!important}}

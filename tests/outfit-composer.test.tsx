@@ -53,6 +53,7 @@ it("honors clothing visibility flags and removes only a failed accessory", async
   expect(screen.queryByTestId("garment-layer-necklace")).toBeNull();
   expect(screen.queryByTestId("garment-layer-pants")).toBeNull();
   expect(screen.getByTestId("garment-layer-torso")).toBeTruthy();
+  expect(screen.getByTestId("garment-layer-torso").parentElement?.getAttribute("data-layer-motion")).toBe("torso");
   expect(screen.getByTestId("garment-layer-headpiece")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Thử lại phụ kiện" })).toBeTruthy();
   view.rerender(<OutfitComposer characterId="base_01" garmentId="nhat_binh/royal_blue" />);
@@ -69,7 +70,7 @@ it("recovers from a required layer failure when that layer is hidden or loads ag
 
   view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ torso: false }} />);
   await waitFor(() => expect(screen.queryByTestId("garment-error-notice")).toBeNull());
-  expect(screen.queryByTestId("garment-layer-torso")).toBeNull();
+  await waitFor(() => expect(screen.queryByTestId("garment-layer-torso")).toBeNull());
 
   view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ torso: true }} />);
   fireEvent.load(await screen.findByTestId("garment-layer-torso"));
@@ -135,7 +136,7 @@ it("retains the last visible complete outfit after an accessory is deselected", 
   const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ necklace: true, headpiece: true }} />);
   await finishImages();
   view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ necklace: true, headpiece: false }} />);
-  expect(screen.queryByTestId("garment-layer-headpiece")).toBeNull();
+  await waitFor(() => expect(screen.queryByTestId("garment-layer-headpiece")).toBeNull());
   view.rerender(<OutfitComposer characterId="base_01" garmentId="nhat_binh/royal_blue" />);
 
   const sources = Array.from(screen.getByTestId("retained-preview").querySelectorAll("img"), (image) => image.getAttribute("src"));

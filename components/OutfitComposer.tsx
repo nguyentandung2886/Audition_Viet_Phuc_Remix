@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useEffectEvent, useState } from "react";
+import React, { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
+import gsap from "gsap";
 import { getGarment } from "@/lib/viet-phuc/catalog";
 import { metadataForSelection, normalizeGarmentMetadata } from "@/lib/viet-phuc/garment-metadata";
 import type { GarmentLayer, GarmentMetadata } from "@/lib/viet-phuc/types";
@@ -14,6 +15,7 @@ export interface OutfitComposerProps {
   characterId: string;
   garmentId?: string | null;
   garmentFilter?: string;
+  reducedMotion?: boolean;
   layerVisibility?: Record<string, boolean>;
   className?: string;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
@@ -25,7 +27,73 @@ interface ImageState {
   retained: RetainedPreview | null;
 }
 
-export default function OutfitComposer({ characterId, garmentId, garmentFilter = "none", layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
+const layerMotion = {
+  torso: { duration: 0.48, x: 2.4, rotation: 0.8, skew: 1.2, origin: "50% 30%" },
+  pants: { duration: 0.42, x: 1.6, rotation: 0.45, skew: 0.7, origin: "50% 48%" },
+  necklace: { duration: 0.3, x: 0.7, rotation: 2, skew: 0, origin: "50% 31%" },
+  headpiece: { duration: 0.34, x: 0.8, rotation: 2.4, skew: 0, origin: "50% 18%" },
+} as const;
+
+interface MotionLayerProps {
+  layer: GarmentLayer;
+  visible: boolean;
+  filter: string;
+  reducedMotion: boolean;
+  stageReady: boolean;
+  requestKey: string;
+  onLoad: () => void;
+  onError: () => void;
+}
+
+function MotionLayer({ layer, visible, filter, reducedMotion, stageReady, requestKey, onLoad, onError }: MotionLayerProps) {
+  const [mounted, setMounted] = useState(visible);
+  const [imageReady, setImageReady] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const previousFilter = useRef(filter);
+  const entered = useRef(false);
+
+  if (visible && !mounted) setMounted(true);
+
+  useLayoutEffect(() => {
+    if (!mounted || !wrapperRef.current || !imageReady || !stageReady) return;
+    const target = wrapperRef.current;
+    const motion = layerMotion[layer.layerId];
+    gsap.killTweensOf(target);
+    if (visible && entered.current) {
+      gsap.set(target, { autoAlpha: 1, xPercent: 0, scale: 1, rotation: 0, skewX: 0 });
+      return;
+    }
+    if (visible) entered.current = true;
+    const animation = reducedMotion
+      ? gsap.to(target, { autoAlpha: visible ? 1 : 0, duration: 0.12, onComplete: () => { if (!visible) { entered.current = false; setMounted(false); } } })
+      : visible
+        ? gsap.fromTo(target,
+            { autoAlpha: 0, xPercent: motion.x, scale: layer.isOptional ? 0.94 : 0.97, rotation: motion.rotation, skewX: motion.skew },
+            { autoAlpha: 1, xPercent: 0, scale: 1, rotation: 0, skewX: 0, duration: motion.duration, ease: "power3.out", clearProps: "willChange" })
+        : gsap.to(target, { keyframes: [
+          { xPercent: -motion.x * 0.45, rotation: -motion.rotation * 0.55, duration: motion.duration * 0.28 },
+          { xPercent: motion.x, rotation: motion.rotation, autoAlpha: 0, scale: 0.98, duration: motion.duration * 0.72 },
+        ], ease: "power2.in", onComplete: () => { entered.current = false; setMounted(false); } });
+    return () => { animation.kill(); };
+  }, [visible, mounted, imageReady, stageReady, reducedMotion, layer.layerId, layer.isOptional]);
+
+  useEffect(() => {
+    if (layer.layerId !== "torso" || previousFilter.current === filter) return;
+    previousFilter.current = filter;
+    if (!visible || !wrapperRef.current || reducedMotion) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(wrapperRef.current, { rotation: -0.55, xPercent: -0.5 }, { rotation: 0, xPercent: 0, duration: 0.4, ease: "sine.out" });
+    }, wrapperRef);
+    return () => context.revert();
+  }, [filter, visible, reducedMotion, layer.layerId]);
+
+  if (!mounted) return null;
+  return <div ref={wrapperRef} className="absolute inset-0 pointer-events-none garment-motion-layer" data-layer-motion={layer.layerId} style={{ zIndex: layer.renderOrder, transformOrigin: layerMotion[layer.layerId].origin, willChange: "transform, opacity", opacity: 0 }}>
+    <Image key={`${requestKey}:${layer.assetPath}`} src={layer.assetPath} alt={layer.name} fill unoptimized loading="eager" sizes="540px" onLoad={() => { setImageReady(true); onLoad(); }} onError={onError} style={{ filter: layer.layerId === "torso" ? filter : undefined }} className="object-contain" data-testid={`garment-layer-${layer.layerId}`} />
+  </div>;
+}
+
+export default function OutfitComposer({ characterId, garmentId, garmentFilter = "none", reducedMotion = false, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
   const [retry, setRetry] = useState(0);
   const selectionKey = `${characterId}:${garmentId}:${retry}`;
   const [request, setRequest] = useState({ selectionKey, generation: 0 });
@@ -94,6 +162,8 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
   const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "failedRequiredIds"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [] };
   const activeLayers = (metadata?.layers ?? []).filter((layer) => layerVisibility?.[layer.layerId] !== false &&
     (!layer.isOptional || (layer.visible && !frame.failedAccessoryIds.includes(layer.layerId))));
+  const renderableLayers = (metadata?.layers ?? []).filter((layer) => !layer.isOptional ||
+    (layer.visible && !frame.failedAccessoryIds.includes(layer.layerId)));
   const characterPath = character?.characterId === characterId ? character.assetPath : null;
   const requiredImageIds = ["character", ...activeLayers.filter((layer) => !layer.isOptional).map((layer) => layer.layerId)];
   const hasActiveImageFailure = requiredImageIds.some((id) => frame.failedRequiredIds.includes(id));
@@ -148,7 +218,7 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
       <div className="absolute inset-0" style={{ visibility: ready ? "visible" : "hidden" }} aria-hidden={!ready}>
         {characterPath && <Image key={`${requestKey}:character`} src={characterPath} alt="Nhân vật minh họa" fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded("character")} onError={() => imageFailed(null)} className="object-contain" data-testid="base-character-layer" />}
         <div className="absolute inset-0 pointer-events-none" data-testid="garment-layers-container" data-garment-id={metadata?.garmentId}>
-          {activeLayers.map((layer) => <Image key={`${requestKey}:${layer.assetPath}`} src={layer.assetPath} alt={layer.name} fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded(layer.layerId)} onError={() => imageFailed(layer)} style={{ zIndex: layer.renderOrder, filter: layer.layerId === "torso" ? garmentFilter : undefined }} className="object-contain" data-testid={`garment-layer-${layer.layerId}`} />)}
+          {renderableLayers.map((layer) => <MotionLayer key={layer.assetPath} layer={layer} visible={activeLayers.some((active) => active.layerId === layer.layerId)} filter={garmentFilter} reducedMotion={reducedMotion} stageReady={ready} requestKey={requestKey} onLoad={() => imageLoaded(layer.layerId)} onError={() => imageFailed(layer)} />)}
         </div>
       </div>
       <div className="absolute inset-x-3 bottom-3 z-[70] rounded-lg bg-zinc-950/95 p-3 text-sm text-zinc-100" role="status" aria-live="polite">

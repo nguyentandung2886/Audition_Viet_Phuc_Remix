@@ -3,17 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import OutfitComposer from "@/components/OutfitComposer";
+import SceneTransition, { type SceneDefinition } from "@/components/SceneTransition";
 import { garmentCatalog, getGarment, occasionSuggestions, pendingCulturalCopy } from "@/lib/viet-phuc/catalog";
 import { createOutfit, selectGarment, toggleAccessory, toggleRequiredLayer, visibleLayerIds } from "@/lib/viet-phuc/outfit-state";
 import type { OutfitState } from "@/lib/viet-phuc/types";
 
 type View = "gallery" | "room" | "result";
-const roomImages: Record<string, string> = {
-  "ao_dai/red": "/assets/approved/scenes/ao_dai/background.png",
-  "nhat_binh/royal_blue": "/assets/approved/scenes/nhat_binh/background.png",
-  "giao_linh/emerald": "/assets/approved/scenes/giao_linh/background.png",
+const roomScenes: Record<string, SceneDefinition> = {
+  "ao_dai/red": { id: "ao_dai/red", index: 0, background: "/assets/approved/scenes/ao_dai/background.png", foreground: "/assets/approved/scenes/ao_dai/foreground.png" },
+  "nhat_binh/royal_blue": { id: "nhat_binh/royal_blue", index: 1, background: "/assets/approved/scenes/nhat_binh/background.png" },
+  "giao_linh/emerald": { id: "giao_linh/emerald", index: 2, background: "/assets/approved/scenes/giao_linh/background.png" },
 };
-const foregroundImage = "/assets/approved/scenes/ao_dai/foreground.png";
+const roomSceneList = Object.values(roomScenes);
 const previews: Record<string, string> = {
   "ao_dai/red": "/assets/garments/ao_dai/red/torso.png",
   "nhat_binh/royal_blue": "/assets/garments/nhat_binh/royal_blue/torso.png",
@@ -40,8 +41,6 @@ export default function Home() {
   const [colorPresetId, setColorPresetId] = useState<ColorPresetId>("original");
   const [motionReduced, setMotionReduced] = useState(false);
   const sceneRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const foregroundRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -57,9 +56,7 @@ export default function Home() {
     if (!sceneRef.current || motionReduced) return;
     const context = gsap.context(() => {
       const timeline = gsap.timeline({ defaults: { ease: "power2.inOut" } });
-      timeline.fromTo(stageRef.current, { opacity: 0.55, scale: view === "gallery" ? 1.055 : 0.94, xPercent: view === "gallery" ? 2 : -3 }, { opacity: 1, scale: 1, xPercent: 0, duration: 0.6 }, 0);
-      timeline.fromTo(foregroundRef.current, { opacity: 0, xPercent: view === "gallery" ? -3 : 3 }, { opacity: 1, xPercent: 0, duration: 0.6 }, 0.1);
-      timeline.fromTo(".scene-enter", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.36, stagger: 0.055 }, 0.3);
+      timeline.fromTo(".scene-enter", { opacity: 0, y: 12, scale: 0.99 }, { opacity: 1, y: 0, scale: 1, duration: 0.42, stagger: 0.055 }, 0.12);
     }, sceneRef);
     return () => context.revert();
   }, [view, outfit.garmentId, motionReduced]);
@@ -80,7 +77,7 @@ export default function Home() {
   }, [occasionOpen, view]);
 
   const garment = getGarment(outfit.garmentId)!;
-  const roomImage = roomImages[outfit.garmentId];
+  const roomScene = roomScenes[outfit.garmentId];
   const visibleIds = visibleLayerIds(outfit);
   const layerVisibility = Object.fromEntries(["pants", "torso", ...garment.optionalAccessories.map((item) => item.id)].map((id) => [id, visibleIds.includes(id as typeof visibleIds[number])]));
   const visibleRequiredNames = [
@@ -123,9 +120,8 @@ export default function Home() {
         {occasionId && <button type="button" onClick={() => { setOccasionId(null); setOccasionOpen(false); }}>Xem tất cả trang phục <span aria-hidden="true">×</span></button>}
       </div>}
       <main ref={sceneRef} className={`main-scene view-${view}`}>
-        <div className="scene-art" ref={stageRef} style={{ backgroundImage: `url(${roomImage})` }} aria-hidden="true" />
+        <SceneTransition scene={roomScene} view={view} reducedMotion={motionReduced} preloadScenes={roomSceneList} />
         <div className="scene-tint" aria-hidden="true" />
-        <div className="scene-foreground" ref={foregroundRef} style={{ backgroundImage: `url(${foregroundImage})` }} aria-hidden="true" />
         {view === "gallery" ? <>
           <section className="gallery-intro scene-enter">
             <span className="eyebrow"><i /> KHÔNG GIAN VIỆT PHỤC · 2026</span>
@@ -145,7 +141,7 @@ export default function Home() {
           <div className="room-visual scene-enter">
             <button className="back-button" type="button" onClick={() => setView("gallery")}>← <span>Về phòng trưng bày</span></button>
             <span className="room-number">PHÒNG THỬ / {numbers[garmentCatalog.findIndex((item) => item.id === garment.id)]}</span>
-            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} garmentFilter={colorPreset.filter} layerVisibility={layerVisibility} className="atelier-composer" /></div>
+            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} garmentFilter={colorPreset.filter} reducedMotion={motionReduced} layerVisibility={layerVisibility} className="atelier-composer" /></div>
             <span className="stage-caption">MINH HỌA PHỐI ĐỒ · PHONG CÁCH ANIME</span>
           </div>
           <section className="style-panel scene-enter" aria-label="Điều chỉnh bản phối">

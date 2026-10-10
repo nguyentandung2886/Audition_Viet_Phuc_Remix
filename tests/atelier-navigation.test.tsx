@@ -26,3 +26,11 @@ it("opens a fitting room, previews a live color treatment, and returns to the ga
   fireEvent.click(screen.getByText("Về phòng trưng bày"));
   expect(screen.getByRole("region", { name: "Chọn trang phục" })).toBeTruthy();
 });
+
+it("keeps two scene plates mounted so room changes can crossfade without flashing", () => {
+  vi.stubGlobal("fetch", () => new Promise(() => {}));
+  render(<Home />);
+  const plates = document.querySelectorAll("[data-scene-plate]");
+  expect(plates).toHaveLength(2);
+  expect(Array.from(plates).map((plate) => plate.getAttribute("data-scene-plate"))).toEqual(["current", "incoming"]);
+});
