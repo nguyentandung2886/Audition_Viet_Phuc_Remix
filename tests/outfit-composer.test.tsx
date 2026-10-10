@@ -45,19 +45,35 @@ it("withholds the previous active metadata while retaining a labeled complete pr
   expect(screen.queryByTestId("retained-preview")).toBeNull();
 });
 
-it("protects clothing from caller visibility flags and removes only a failed accessory", async () => {
+it("honors clothing visibility flags and removes only a failed accessory", async () => {
   vi.stubGlobal("fetch", async (path: string) => reply(path.includes("characters") ? character : json(path.includes("nhat_binh") ? "nhat_binh/royal_blue" : "ao_dai/red")));
-  const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ pants: false, torso: false }} />);
+  const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ pants: false }} />);
   await finishImages();
   fireEvent.error(screen.getByTestId("garment-layer-necklace"));
   expect(screen.queryByTestId("garment-layer-necklace")).toBeNull();
-  expect(screen.getByTestId("garment-layer-pants")).toBeTruthy();
+  expect(screen.queryByTestId("garment-layer-pants")).toBeNull();
   expect(screen.getByTestId("garment-layer-torso")).toBeTruthy();
   expect(screen.getByTestId("garment-layer-headpiece")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Thử lại phụ kiện" })).toBeTruthy();
   view.rerender(<OutfitComposer characterId="base_01" garmentId="nhat_binh/royal_blue" />);
   await finishImages();
   expect(screen.getByTestId("garment-layer-necklace").getAttribute("src")).toContain("nhat_binh/royal_blue");
+});
+
+it("recovers from a required layer failure when that layer is hidden or loads again", async () => {
+  vi.stubGlobal("fetch", async (path: string) => reply(path.includes("characters") ? character : json("ao_dai/red")));
+  const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" />);
+  await finishImages();
+  fireEvent.error(screen.getByTestId("garment-layer-torso"));
+  expect(screen.getByTestId("garment-error-notice")).toBeTruthy();
+
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ torso: false }} />);
+  await waitFor(() => expect(screen.queryByTestId("garment-error-notice")).toBeNull());
+  expect(screen.queryByTestId("garment-layer-torso")).toBeNull();
+
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ torso: true }} />);
+  fireEvent.load(await screen.findByTestId("garment-layer-torso"));
+  await waitFor(() => expect(screen.queryByTestId("garment-error-notice")).toBeNull());
 });
 
 it("keeps the previous fully clothed preview on a failed request and allows retry", async () => {

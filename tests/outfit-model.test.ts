@@ -38,14 +38,16 @@ describe("outfit transitions", () => {
     const hidden = initial && stateModule?.toggleAccessory(initial, "headpiece");
     const failed = hidden && stateModule?.recordLayerFailure(hidden, "ao_dai/red", "necklace");
     const next = failed && stateModule?.selectGarment(failed, "nhat_binh/royal_blue");
-    expect(next).toEqual({ garmentId: "nhat_binh/royal_blue", variantId: "royal_blue", accessoryIds: ["necklace", "headpiece"], failedAccessoryIds: [] });
+    expect(next).toEqual({ garmentId: "nhat_binh/royal_blue", variantId: "royal_blue", accessoryIds: ["necklace", "headpiece"], hiddenRequiredLayerIds: [], failedAccessoryIds: [] });
   });
-  it("allows callers to hide accessories while always keeping pants and torso", () => {
+  it("allows callers to toggle pants, torso and accessories independently", () => {
     const initial = stateModule?.createOutfit("ao_dai/red");
     const hidden = initial && stateModule?.toggleAccessory(initial, "headpiece");
-    const triedPants = hidden && stateModule?.toggleAccessory(hidden, "pants");
-    const triedTorso = triedPants && stateModule?.toggleAccessory(triedPants, "torso");
-    expect(triedTorso && stateModule?.visibleLayerIds(triedTorso)).toEqual(["pants", "torso", "necklace"]);
+    const noPants = hidden && stateModule?.toggleRequiredLayer(hidden, "pants");
+    const noClothing = noPants && stateModule?.toggleRequiredLayer(noPants, "torso");
+    expect(noClothing && stateModule?.visibleLayerIds(noClothing)).toEqual(["necklace"]);
+    const torsoRestored = noClothing && stateModule?.toggleRequiredLayer(noClothing, "torso");
+    expect(torsoRestored && stateModule?.visibleLayerIds(torsoRestored)).toEqual(["torso", "necklace"]);
   });
   it("rejects unknown choices without changing the valid previous state", () => {
     const initial = stateModule?.createOutfit("ao_dai/red");
@@ -53,6 +55,7 @@ describe("outfit transitions", () => {
     expect(initial && stateModule?.selectGarment(initial, "unknown")).toBe(initial);
     expect(initial && stateModule?.selectVariant(initial, "invented")).toBe(initial);
     expect(initial && stateModule?.toggleAccessory(initial, "unknown")).toBe(initial);
+    expect(initial && stateModule?.toggleRequiredLayer(initial, "unknown")).toBe(initial);
     expect(stateModule?.createOutfit("unknown")).toBeNull();
   });
   it("removes only a failed optional image and ignores stale failure events", () => {

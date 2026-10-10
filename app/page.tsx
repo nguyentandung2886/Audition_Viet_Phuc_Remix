@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import OutfitComposer from "@/components/OutfitComposer";
 import { garmentCatalog, getGarment, occasionSuggestions, pendingCulturalCopy } from "@/lib/viet-phuc/catalog";
-import { createOutfit, selectGarment, toggleAccessory, visibleLayerIds } from "@/lib/viet-phuc/outfit-state";
+import { createOutfit, selectGarment, toggleAccessory, toggleRequiredLayer, visibleLayerIds } from "@/lib/viet-phuc/outfit-state";
 import type { OutfitState } from "@/lib/viet-phuc/types";
 
 type View = "gallery" | "room" | "result";
@@ -82,7 +82,11 @@ export default function Home() {
   const garment = getGarment(outfit.garmentId)!;
   const roomImage = roomImages[outfit.garmentId];
   const visibleIds = visibleLayerIds(outfit);
-  const layerVisibility = Object.fromEntries(garment.optionalAccessories.map((item) => [item.id, visibleIds.includes(item.id)]));
+  const layerVisibility = Object.fromEntries(["pants", "torso", ...garment.optionalAccessories.map((item) => item.id)].map((id) => [id, visibleIds.includes(id as typeof visibleIds[number])]));
+  const visibleRequiredNames = [
+    visibleIds.includes("torso") ? "Áo" : null,
+    visibleIds.includes("pants") ? "Quần" : null,
+  ].filter(Boolean).join(", ") || "Không chọn";
   const filtered = occasionId ? garmentCatalog.filter((item) => occasionSuggestions.find((occasion) => occasion.id === occasionId)?.garmentIds.includes(item.id)) : garmentCatalog;
   const occasionName = occasionSuggestions.find((occasion) => occasion.id === occasionId)?.displayName;
 
@@ -149,12 +153,12 @@ export default function Home() {
             <h1 ref={headingRef} tabIndex={-1}>{view === "result" ? "Bản phối của bạn" : garment.shortName}</h1>
             <p className="panel-lead">{view === "result" ? "Một góc nhìn mới, được phối theo phong cách của riêng bạn." : "Chọn chi tiết bạn thích và xem trang phục thay đổi ngay trên nhân vật."}</p>
             {view === "room" ? <>
-              <div className="control-section"><div className="section-heading"><span>01</span><h2>Trang phục</h2></div><div className="garment-switch" role="group" aria-label="Loại trang phục">{garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={item.id === outfit.garmentId} onClick={() => changeGarment(item.id)}>{item.shortName}</button>)}</div></div>
+              <div className="control-section"><div className="section-heading"><span>01</span><h2>Trang phục</h2></div><div className="garment-switch" role="group" aria-label="Loại trang phục">{garmentCatalog.map((item) => <button key={item.id} type="button" aria-pressed={item.id === outfit.garmentId} onClick={() => changeGarment(item.id)}>{item.shortName}</button>)}</div><div className="accessory-options layer-options" role="group" aria-label="Lớp trang phục">{([{"id":"torso","label":"Áo"},{"id":"pants","label":"Quần"}] as const).map((layer) => <label key={layer.id}><input type="checkbox" checked={visibleIds.includes(layer.id)} onChange={() => setOutfit((current) => toggleRequiredLayer(current, layer.id))} /><span className="accessory-check" aria-hidden="true">✓</span><span>{layer.label}</span></label>)}</div></div>
               <div className="control-section"><div className="section-heading"><span>02</span><h2>Màu sắc</h2></div><div className="color-options" role="group" aria-label="Màu trang phục">{colorPresets.map((preset) => <button key={preset.id} className={`color-option color-${preset.id}`} type="button" aria-pressed={preset.id === colorPresetId} onClick={() => setColorPresetId(preset.id)}><span className="color-swatch" style={preset.id === "original" ? { background: originalSwatches[outfit.garmentId] } : undefined} aria-hidden="true" />{preset.label}</button>)}</div><p className="color-note">Màu phối minh họa trực tiếp, không thay đổi hoa văn gốc.</p></div>
               <div className="control-section"><div className="section-heading"><span>03</span><h2>Phụ kiện</h2></div><div className="accessory-options">{garment.optionalAccessories.map((accessory) => <label key={accessory.id}><input type="checkbox" checked={outfit.accessoryIds.includes(accessory.id)} onChange={() => setOutfit((current) => toggleAccessory(current, accessory.id))} /><span className="accessory-check" aria-hidden="true">✓</span><span>{accessory.displayName}</span></label>)}</div></div>
               <button className="primary-action" type="button" onClick={() => setView("result")}>Xem bản phối <span aria-hidden="true">↗</span></button>
             </> : <>
-              <div className="result-summary"><span className="summary-kicker">BẢN PHỐI HIỆN TẠI</span><strong>{garment.shortName}</strong><p>Màu minh họa: {colorPreset.label}</p><p>Phụ kiện: {outfit.accessoryIds.length ? garment.optionalAccessories.filter((item) => outfit.accessoryIds.includes(item.id)).map((item) => item.displayName).join(", ") : "Không chọn"}</p></div>
+              <div className="result-summary"><span className="summary-kicker">BẢN PHỐI HIỆN TẠI</span><strong>{garment.shortName}</strong><p>Lớp trang phục: {visibleRequiredNames}</p><p>Màu minh họa: {colorPreset.label}</p><p>Phụ kiện: {outfit.accessoryIds.length ? garment.optionalAccessories.filter((item) => outfit.accessoryIds.includes(item.id)).map((item) => item.displayName).join(", ") : "Không chọn"}</p></div>
               <button className="primary-action" type="button" onClick={() => setView("room")}>Tiếp tục phối <span aria-hidden="true">↗</span></button>
             </>}
             <aside className="culture-note"><span>GHI CHÚ VĂN HÓA</span><p>{pendingCulturalCopy}</p></aside>

@@ -21,7 +21,7 @@ export interface OutfitComposerProps {
 }
 interface RetainedPreview { garmentId: string; name: string; characterPath: string; layers: GarmentLayer[]; garmentFilter: string }
 interface ImageState {
-  key: string; loadedIds: string[]; failedAccessoryIds: string[]; error: boolean;
+  key: string; loadedIds: string[]; failedAccessoryIds: string[]; failedRequiredIds: string[];
   retained: RetainedPreview | null;
 }
 
@@ -36,7 +36,7 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
   const requestKey = `${selectionKey}:${request.generation}`;
   const [loaded, setLoaded] = useState<{ key: string; metadata: GarmentMetadata | null; error: boolean } | null>(null);
   const [character, setCharacter] = useState<CharacterMetadata | null>(null);
-  const [images, setImages] = useState<ImageState>({ key: "", loadedIds: [], failedAccessoryIds: [], error: false, retained: null });
+  const [images, setImages] = useState<ImageState>({ key: "", loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: null });
   const notifyGarment = useEffectEvent((value: GarmentMetadata | null) => onGarmentLoaded?.(value));
   const notifyCharacter = useEffectEvent((value: CharacterMetadata) => onCharacterLoaded?.(value));
 
@@ -91,12 +91,14 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
   }, [characterId, garmentId, requestKey]);
 
   const metadata = metadataForSelection(loaded?.key === requestKey ? loaded.metadata : null, garmentId);
-  const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "error"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], error: false };
-  const activeLayers = (metadata?.layers ?? []).filter((layer) => !layer.isOptional ||
-    (layer.visible && layerVisibility?.[layer.layerId] !== false && !frame.failedAccessoryIds.includes(layer.layerId)));
+  const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "failedRequiredIds"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [] };
+  const activeLayers = (metadata?.layers ?? []).filter((layer) => layerVisibility?.[layer.layerId] !== false &&
+    (!layer.isOptional || (layer.visible && !frame.failedAccessoryIds.includes(layer.layerId))));
   const characterPath = character?.characterId === characterId ? character.assetPath : null;
-  const ready = Boolean(metadata && characterPath && !frame.error && ["character", "pants", "torso"].every((id) => frame.loadedIds.includes(id)));
-  const error = (loaded?.key === requestKey && loaded.error) || frame.error || characterId !== "base_01";
+  const requiredImageIds = ["character", ...activeLayers.filter((layer) => !layer.isOptional).map((layer) => layer.layerId)];
+  const hasActiveImageFailure = requiredImageIds.some((id) => frame.failedRequiredIds.includes(id));
+  const ready = Boolean(metadata && characterPath && !hasActiveImageFailure && requiredImageIds.every((id) => frame.loadedIds.includes(id)));
+  const error = (loaded?.key === requestKey && loaded.error) || hasActiveImageFailure || characterId !== "base_01";
   const retained = !ready && images.retained?.characterPath === characterPath ? images.retained : null;
 
   if (ready && metadata && characterPath) {
@@ -111,10 +113,11 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
 
   function imageLoaded(layerId: string) {
     setImages((previous) => {
-      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], error: false, retained: previous.retained };
+      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: previous.retained };
       const loadedIds = [...new Set([...current.loadedIds, layerId])];
-      const complete = !current.error && metadata && characterPath && ["character", "pants", "torso"].every((id) => loadedIds.includes(id));
-      return { ...current, loadedIds, retained: complete ? {
+      const failedRequiredIds = current.failedRequiredIds.filter((id) => id !== layerId);
+      const complete = metadata && characterPath && !requiredImageIds.some((id) => failedRequiredIds.includes(id)) && requiredImageIds.every((id) => loadedIds.includes(id));
+      return { ...current, loadedIds, failedRequiredIds, retained: complete ? {
         garmentId: metadata.garmentId, name: metadata.name, characterPath,
         layers: activeLayers.filter((layer) => loadedIds.includes(layer.layerId)), garmentFilter,
       } : current.retained };
@@ -123,8 +126,11 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
 
   function imageFailed(layer: GarmentLayer | null) {
     setImages((previous) => {
-      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], error: false, retained: previous.retained };
-      if (!layer?.isOptional) return { ...current, error: true };
+      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: previous.retained };
+      if (!layer?.isOptional) {
+        const failedId = layer?.layerId ?? "character";
+        return { ...current, loadedIds: current.loadedIds.filter((id) => id !== failedId), failedRequiredIds: [...new Set([...current.failedRequiredIds, failedId])] };
+      }
       return { ...current, failedAccessoryIds: [...new Set([...current.failedAccessoryIds, layer.layerId])],
         retained: current.retained && current.retained.garmentId === garmentId
           ? { ...current.retained, layers: current.retained.layers.filter((item) => item.layerId !== layer.layerId) } : current.retained };
@@ -149,7 +155,7 @@ export default function OutfitComposer({ characterId, garmentId, garmentFilter =
         {ready && frame.failedAccessoryIds.length === 0 && <p>{metadata?.name}</p>}
         {!ready && !error && <p data-testid="composer-loading">Đang chuẩn bị trang phục…{retained ? ` Bản phối trước: ${retained.name}.` : ""}</p>}
         {error && <div data-testid="garment-error-notice"><p>Chưa tải được trang phục.{retained ? ` Đang giữ bản phối trước: ${retained.name}.` : " Vui lòng thử lại."}</p><button type="button" className="mt-2 min-h-11 min-w-11 rounded-lg border border-zinc-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setRetry((value) => value + 1)}>Thử lại trang phục</button></div>}
-        {frame.failedAccessoryIds.length > 0 && <div><p>Chưa tải được phụ kiện. Bản phối vẫn giữ đầy đủ áo và phần trang phục bên dưới.</p><button type="button" className="mt-2 min-h-11 min-w-11 rounded-lg border border-zinc-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setRetry((value) => value + 1)}>Thử lại phụ kiện</button></div>}
+        {frame.failedAccessoryIds.length > 0 && <div><p>Chưa tải được phụ kiện. Các lớp trang phục bạn đang chọn vẫn được giữ nguyên.</p><button type="button" className="mt-2 min-h-11 min-w-11 rounded-lg border border-zinc-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setRetry((value) => value + 1)}>Thử lại phụ kiện</button></div>}
       </div>
     </div>
   );

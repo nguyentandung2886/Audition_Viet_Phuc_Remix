@@ -23,3 +23,5 @@
 .color-cool .color-swatch{background:linear-gradient(135deg,#466d82,#789aa4)}
 .color-note{margin:10px 0 0;color:#526875;font-size:12px;line-height:1.5}
 .atelier-composer img[data-testid^="garment-layer-"]{transition:filter .48s cubic-bezier(.4,0,.2,1)}
+.layer-options{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+.layer-options label{background:#edf3f2;border-color:#c6d5d7;font-weight:700}

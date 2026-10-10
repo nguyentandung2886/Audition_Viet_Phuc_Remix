@@ -1,5 +1,5 @@
 import { getGarment } from "./catalog";
-import type { AccessoryId, LayerId, OutfitState } from "./types";
+import type { AccessoryId, LayerId, OutfitState, RequiredLayerId } from "./types";
 
 export function createOutfit(garmentId: string): OutfitState | null {
   const garment = getGarment(garmentId);
@@ -7,6 +7,7 @@ export function createOutfit(garmentId: string): OutfitState | null {
   return {
     garmentId: garment.id, variantId: garment.defaultVariantId,
     accessoryIds: garment.optionalAccessories.filter((item) => item.defaultSelected).map((item) => item.id),
+    hiddenRequiredLayerIds: [],
     failedAccessoryIds: [],
   };
 }
@@ -31,6 +32,17 @@ export function toggleAccessory(state: OutfitState, accessoryId: string): Outfit
   };
 }
 
+export function toggleRequiredLayer(state: OutfitState, layerId: string): OutfitState {
+  const requiredLayer = getGarment(state.garmentId)?.requiredLayerIds.find((id) => id === layerId);
+  if (!requiredLayer) return state;
+  return {
+    ...state,
+    hiddenRequiredLayerIds: state.hiddenRequiredLayerIds.includes(requiredLayer)
+      ? state.hiddenRequiredLayerIds.filter((id) => id !== requiredLayer)
+      : [...state.hiddenRequiredLayerIds, requiredLayer] as RequiredLayerId[],
+  };
+}
+
 export function recordLayerFailure(state: OutfitState, garmentId: string, layerId: string): OutfitState {
   if (garmentId !== state.garmentId) return state;
   const accessory = getGarment(garmentId)?.optionalAccessories.find((item) => item.id === layerId);
@@ -44,5 +56,6 @@ export function visibleLayerIds(state: OutfitState): LayerId[] {
   const accessories: AccessoryId[] = garment.optionalAccessories
     .filter((item) => state.accessoryIds.includes(item.id) && !state.failedAccessoryIds.includes(item.id))
     .map((item) => item.id);
-  return [...garment.requiredLayerIds, ...accessories];
+  const required = garment.requiredLayerIds.filter((id) => !state.hiddenRequiredLayerIds.includes(id));
+  return [...required, ...accessories];
 }

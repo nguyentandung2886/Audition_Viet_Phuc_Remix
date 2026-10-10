@@ -42,6 +42,7 @@ export interface GarmentMetadata {
 }
 export interface OutfitState {
   garmentId: GarmentId; variantId: VariantId; accessoryIds: AccessoryId[];
+  hiddenRequiredLayerIds: RequiredLayerId[];
   failedAccessoryIds: AccessoryId[];
 }
 export type OccasionId = "le_tot_nghiep" | "trinh_dien_van_hoa";
