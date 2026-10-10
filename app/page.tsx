@@ -27,8 +27,16 @@ export default function Home() {
 
   // Garment-specific color palettes
   const isNhatBinh = selectedGarment === "nhat_binh/royal_blue";
+  const isGiaoLinh = selectedGarment === "giao_linh/emerald";
 
-  const colorMoods = isNhatBinh
+  const colorMoods = isGiaoLinh
+    ? [
+        { id: "default", name: "Ngọc Lục Bảo Đại Việt", color: "bg-emerald-600", filter: "" },
+        { id: "ruby", name: "Hồng Đào Quý Tộc", color: "bg-rose-600", filter: "hue-rotate-[140deg] saturate-125" },
+        { id: "sapphire", name: "Lam Sắc Cung Đình", color: "bg-blue-600", filter: "hue-rotate-[45deg] saturate-125" },
+        { id: "gold", name: "Hoàng Kim Vương Triều", color: "bg-amber-500", filter: "hue-rotate-[290deg] saturate-140 brightness-105" },
+      ]
+    : isNhatBinh
     ? [
         { id: "default", name: "Lam Sắc Hoàng Triều", color: "bg-blue-600", filter: "" },
         { id: "purple", name: "Tím Huế Cung Đình", color: "bg-purple-600", filter: "hue-rotate-[45deg] saturate-125" },
@@ -88,14 +96,14 @@ export default function Home() {
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
-        
+
         {/* Left Column: Center Stage & Outfit Composer */}
         <section className="w-full lg:w-1/2 flex flex-col items-center">
           <div className="w-full max-w-[500px]">
             {/* Stage Pedestal Frame */}
             <div className="relative group">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-red-600/25 via-amber-500/15 to-transparent blur-2xl transition-all duration-700 group-hover:from-red-600/35" />
-              
+
               {/* Core Component Render with Garment-Only Color Mood (Base character strictly unfiltered) */}
               <OutfitComposer
                 characterId="base_01"
@@ -108,20 +116,20 @@ export default function Home() {
             </div>
 
             {/* Garment Quick Switcher Bar */}
-            <div className="mt-5 p-2 rounded-xl bg-zinc-900/70 border border-white/5 backdrop-blur-md flex items-center justify-center gap-2">
+            <div className="mt-5 p-2 rounded-xl bg-zinc-900/70 border border-white/5 backdrop-blur-md flex items-center justify-center gap-1.5">
               <button
                 type="button"
                 onClick={() => {
                   setSelectedGarment("ao_dai/red");
                   setActiveMood("default");
                 }}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
                   selectedGarment === "ao_dai/red"
                     ? "bg-red-950/80 border border-red-500/50 text-red-200 shadow-md shadow-red-950/40"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Áo Dài Đỏ
+                Áo Dài
               </button>
               <button
                 type="button"
@@ -129,7 +137,7 @@ export default function Home() {
                   setSelectedGarment("nhat_binh/royal_blue");
                   setActiveMood("default");
                 }}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
                   selectedGarment === "nhat_binh/royal_blue"
                     ? "bg-blue-950/80 border border-blue-500/50 text-blue-200 shadow-md shadow-blue-950/40"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
@@ -140,16 +148,30 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => {
+                  setSelectedGarment("giao_linh/emerald");
+                  setActiveMood("default");
+                }}
+                className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedGarment === "giao_linh/emerald"
+                    ? "bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 shadow-md shadow-emerald-950/40"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                }`}
+              >
+                Áo Giao Lĩnh
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setSelectedGarment(null);
                   setActiveMood("default");
                 }}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                className={`flex-1 py-2 px-2.5 rounded-lg text-xs font-medium transition-all ${
                   selectedGarment === null
                     ? "bg-zinc-800 border border-zinc-600 text-zinc-100 shadow-md"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Base Nhân Vật
+                Base
               </button>
             </div>
 
@@ -171,8 +193,10 @@ export default function Home() {
                         : "bg-black/40 border-zinc-800 text-zinc-500"
                     }`}
                   >
-                    <span>👑 Mấn Đội Đầu</span>
-                    <span className="font-mono text-[10px]">
+                    <span className="truncate mr-1">
+                      👑 {activeGarmentMeta?.layers?.find((l) => l.layerId === "headpiece")?.name || "Mấn / Trâm Cài"}
+                    </span>
+                    <span className="font-mono text-[10px] shrink-0">
                       {layerVisibility.headpiece ? "ON" : "OFF"}
                     </span>
                   </button>
@@ -186,8 +210,10 @@ export default function Home() {
                         : "bg-black/40 border-zinc-800 text-zinc-500"
                     }`}
                   >
-                    <span>📿 Kiềng Bạc Sen</span>
-                    <span className="font-mono text-[10px]">
+                    <span className="truncate mr-1">
+                      📿 {activeGarmentMeta?.layers?.find((l) => l.layerId === "necklace")?.name || "Ngọc Bội / Kiềng"}
+                    </span>
+                    <span className="font-mono text-[10px] shrink-0">
                       {layerVisibility.necklace ? "ON" : "OFF"}
                     </span>
                   </button>
@@ -201,8 +227,10 @@ export default function Home() {
                         : "bg-black/40 border-zinc-800 text-zinc-500"
                     }`}
                   >
-                    <span>👘 Thân Áo Dài</span>
-                    <span className="font-mono text-[10px]">
+                    <span className="truncate mr-1">
+                      👘 {activeGarmentMeta?.layers?.find((l) => l.layerId === "torso")?.name || "Thân Áo Lễ Phục"}
+                    </span>
+                    <span className="font-mono text-[10px] shrink-0">
                       {layerVisibility.torso ? "ON" : "OFF"}
                     </span>
                   </button>
@@ -216,8 +244,10 @@ export default function Home() {
                         : "bg-black/40 border-zinc-800 text-zinc-500"
                     }`}
                   >
-                    <span>👖 Quần Lụa Trắng</span>
-                    <span className="font-mono text-[10px]">
+                    <span className="truncate mr-1">
+                      👖 {activeGarmentMeta?.layers?.find((l) => l.layerId === "pants")?.name || "Quần / Thường Phiến"}
+                    </span>
+                    <span className="font-mono text-[10px] shrink-0">
                       {layerVisibility.pants ? "ON" : "OFF"}
                     </span>
                   </button>
@@ -240,11 +270,10 @@ export default function Home() {
                         type="button"
                         title={mood.name}
                         onClick={() => setActiveMood(mood.id)}
-                        className={`w-6 h-6 rounded-full ${mood.color} transition-all ${
-                          activeMood === mood.id
+                        className={`w-6 h-6 rounded-full ${mood.color} transition-all ${activeMood === mood.id
                             ? "ring-2 ring-white scale-110 shadow-md shadow-white/30"
                             : "opacity-60 hover:opacity-100 hover:scale-105"
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
@@ -256,11 +285,11 @@ export default function Home() {
 
         {/* Right Column: Editorial Curation & Technical Inspector */}
         <section className="w-full lg:w-1/2 flex flex-col gap-6">
-          
+
           {/* Garment Editorial Headline Card */}
           <div className="p-6 rounded-2xl bg-zinc-900/40 border border-amber-500/15 backdrop-blur-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-full blur-2xl" />
-            
+
             <div className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-amber-400 uppercase">
               <span>Sưu Tập Di Sản</span>
               <span>·</span>
@@ -339,49 +368,22 @@ export default function Home() {
                 <span className="text-zinc-500 text-[10px]">renderOrder: 0</span>
               </div>
 
-              {selectedGarment === "ao_dai/red" && (
-                <>
-                  {layerVisibility.pants && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/60 border border-white/10">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-zinc-300" />
-                        <span className="text-zinc-300">Quần Lụa Trắng (pants.png)</span>
-                      </div>
-                      <span className="text-zinc-400 text-[10px]">renderOrder: 25</span>
+              {/* Dynamic Garment Layers */}
+              {activeGarmentMeta?.layers?.map((layer) => {
+                if (!layerVisibility[layer.layerId]) return null;
+                return (
+                  <div
+                    key={layer.layerId}
+                    className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/60 border border-white/10"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="text-zinc-300">{layer.name} ({layer.layerId}.png)</span>
                     </div>
-                  )}
-
-                  {layerVisibility.torso && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-950/40 border border-red-500/30">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-                        <span className="text-red-200">Thân Áo Dài Đỏ Hoa Sen (torso.png)</span>
-                      </div>
-                      <span className="text-red-400/90 text-[10px]">renderOrder: 40</span>
-                    </div>
-                  )}
-
-                  {layerVisibility.necklace && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-amber-950/30 border border-amber-500/30">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-300" />
-                        <span className="text-amber-200">Kiềng Bạc Cổ Truyền (necklace.png)</span>
-                      </div>
-                      <span className="text-amber-400 text-[10px]">renderOrder: 50</span>
-                    </div>
-                  )}
-
-                  {layerVisibility.headpiece && (
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-red-950/60 border border-red-500/40">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500" />
-                        <span className="text-red-200">Mấn Đội Đầu Hoàng Kim (headpiece.png)</span>
-                      </div>
-                      <span className="text-red-400 text-[10px]">renderOrder: 60</span>
-                    </div>
-                  )}
-                </>
-              )}
+                    <span className="text-zinc-400 text-[10px]">renderOrder: {layer.renderOrder}</span>
+                  </div>
+                );
+              })}
 
               {selectedGarment === "ao_dai/missing_test" && (
                 <div className="flex items-center justify-between p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/20">
