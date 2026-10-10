@@ -15,7 +15,7 @@ const roomImages: Record<string, string> = {
 };
 const foregroundImage = "/assets/approved/scenes/ao_dai/foreground.png";
 const previews: Record<string, string> = {
-  "ao_dai/red": "/assets/approved/garments/ao_dai/red/torso.png",
+  "ao_dai/red": "/assets/garments/ao_dai/red/torso.png",
   "nhat_binh/royal_blue": "/assets/garments/nhat_binh/royal_blue/torso.png",
   "giao_linh/emerald": "/assets/garments/giao_linh/emerald/torso.png",
 };
@@ -122,7 +122,7 @@ export default function Home() {
           <div className="room-visual scene-enter">
             <button className="back-button" type="button" onClick={() => setView("gallery")}>← <span>Về phòng trưng bày</span></button>
             <span className="room-number">PHÒNG THỬ / {numbers[garmentCatalog.findIndex((item) => item.id === garment.id)]}</span>
-            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} approvedVariant={outfit.garmentId === "ao_dai/red" ? aoDaiColor : undefined} layerVisibility={layerVisibility} className="atelier-composer" /></div>
+            <div className="character-stage"><OutfitComposer characterId="base_01" garmentId={outfit.garmentId} approvedVariant={outfit.garmentId === "ao_dai/red" && aoDaiColor === "indigo" ? "indigo" : undefined} layerVisibility={layerVisibility} className="atelier-composer" /></div>
             <span className="stage-caption">MINH HỌA PHỐI ĐỒ · PHONG CÁCH ANIME</span>
           </div>
           <section className="style-panel scene-enter" aria-label="Điều chỉnh bản phối">
