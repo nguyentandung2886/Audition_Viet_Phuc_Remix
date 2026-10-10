@@ -77,3 +77,4 @@ scripts/pipeline/temp_processing/
 
 # Isolated agent workspaces
 .worktrees/
+.vercel
