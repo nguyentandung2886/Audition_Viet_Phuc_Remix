@@ -44,10 +44,10 @@
   ],
   "provenance": {
     "sourceTool": "built-in image_gen",
-    "sourceVersion": "room-background-v001 + room-foreground-v001",
+    "sourceVersion": "room-background-v1 + room-foreground-v1",
     "sourcePaths": [
-      "scripts/pipeline/temp_processing/ao-dai/room-background-v001.png",
-      "scripts/pipeline/temp_processing/ao-dai/room-foreground-v001.png"
+      "public/assets/approved/scenes/ao_dai/room-background-v1.png",
+      "public/assets/approved/scenes/ao_dai/room-foreground-v1.png"
     ],
     "processingPipeline": "scripts/pipeline/process-approved-assets.mjs"
   },

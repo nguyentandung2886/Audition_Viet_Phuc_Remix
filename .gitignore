@@ -31,6 +31,8 @@ next-env.d.ts
 !/public/assets/approved/scenes/ao_dai/
 !/public/assets/approved/scenes/ao_dai/background.png
 !/public/assets/approved/scenes/ao_dai/foreground.png
+!/public/assets/approved/scenes/ao_dai/room-background-v1.png
+!/public/assets/approved/scenes/ao_dai/room-foreground-v1.png
 !/public/assets/approved/scenes/ao_dai/scene.json
 !/public/assets/approved/scenes/nhat_binh/
 !/public/assets/approved/scenes/nhat_binh/background.png
