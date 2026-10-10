@@ -23,13 +23,13 @@ if str(project_root) not in sys.path:
 try:
     from pipeline.config import load_config
     from pipeline.generate_base import generate_base_character
-    from pipeline.generator import generate_image
-    from pipeline.processor import extract_garment
+    from pipeline.generator import generate_image, isolate_garment_ai
+    from pipeline.processor import extract_garment, process_isolated_garment
 except ImportError:
     from config import load_config  # type: ignore
     from generate_base import generate_base_character  # type: ignore
-    from generator import generate_image  # type: ignore
-    from processor import extract_garment  # type: ignore
+    from generator import generate_image, isolate_garment_ai  # type: ignore
+    from processor import extract_garment, process_isolated_garment  # type: ignore
 
 logger = logging.getLogger("pipeline.test_v2")
 
@@ -74,6 +74,10 @@ def run_pipeline_v2(
     cleanup_noise: bool = True,
     auto_generate_base: bool = False,
     session: Optional[Any] = None,
+    isolation_method: str = "subtraction",
+    component_type: str = "torso",
+    garment_name: str = "traditional Vietnamese garment",
+    custom_isolation_details: Optional[str] = None,
 ) -> bool:
     """Run the complete Pipeline V2 flow end-to-end.
 
@@ -88,11 +92,15 @@ def run_pipeline_v2(
         cleanup_noise: Whether to filter out isolated noise components.
         auto_generate_base: If True, generate base character if not found.
         session: Optional pre-configured rembg session.
+        isolation_method: Method for extracting garment ('ai_prompt' or 'subtraction').
+        component_type: Component category ('torso', 'pants', 'headpiece', 'necklace').
+        garment_name: Culturally authentic garment name for isolation prompt.
+        custom_isolation_details: Optional specific descriptive details.
 
     Returns:
         bool: True if pipeline completed successfully, False otherwise.
     """
-    logger.info("Initializing Pipeline V2 test run...")
+    logger.info("Initializing Pipeline V2 test run (isolation_method=%s)...", isolation_method)
 
     cfg = load_config()
     output_dir_str = cfg.get("OUTPUT_DIR")
@@ -155,20 +163,51 @@ def run_pipeline_v2(
 
     logger.info("Step 1 succeeded: Dressed character image generated at %s", resolved_dressed_path)
 
-    # Step 2: Subtract base character body and extract transparent garment
-    logger.info("Step 2/2: Extracting garment layer via image subtraction...")
-    extract_ok = extract_garment(
-        base_image_path=resolved_base_path,
-        dressed_image_path=resolved_dressed_path,
-        output_path=resolved_garment_path,
-        tolerance=tolerance,
-        cleanup_noise=cleanup_noise,
-        session=session,
-    )
+    # Step 2: Isolate garment layer
+    if isolation_method == "ai_prompt":
+        logger.info(
+            "Step 2/2: Isolating %s (%s) via AI prompt-based removal...",
+            component_type,
+            garment_name,
+        )
+        temp_raw_isolated = (
+            resolved_garment_path.parent / f"raw_ai_isolated_{resolved_garment_path.name}"
+        )
+        isolate_ok = isolate_garment_ai(
+            dressed_image_path=resolved_dressed_path,
+            output_path=temp_raw_isolated,
+            component_type=component_type,
+            garment_name=garment_name,
+            custom_details=custom_isolation_details,
+            client=client,
+            model=model,
+        )
+        if not isolate_ok or not temp_raw_isolated.is_file():
+            logger.error("Step 2 failed: AI prompt garment isolation was unsuccessful.")
+            return False
 
-    if not extract_ok or not resolved_garment_path.is_file():
-        logger.error("Step 2 failed: Garment extraction was unsuccessful.")
-        return False
+        logger.info("Processing isolated garment background removal...")
+        process_ok = process_isolated_garment(
+            input_image_path=temp_raw_isolated,
+            output_path=resolved_garment_path,
+            session=session,
+        )
+        if not process_ok or not resolved_garment_path.is_file():
+            logger.error("Step 2 failed: Processing isolated garment background removal failed.")
+            return False
+    else:
+        logger.info("Step 2/2: Extracting garment layer via image subtraction...")
+        extract_ok = extract_garment(
+            base_image_path=resolved_base_path,
+            dressed_image_path=resolved_dressed_path,
+            output_path=resolved_garment_path,
+            tolerance=tolerance,
+            cleanup_noise=cleanup_noise,
+            session=session,
+        )
+        if not extract_ok or not resolved_garment_path.is_file():
+            logger.error("Step 2 failed: Garment extraction was unsuccessful.")
+            return False
 
     logger.info("Step 2 succeeded: Extracted garment asset saved at %s", resolved_garment_path)
     logger.info("Pipeline V2 end-to-end integration run completed successfully!")
@@ -210,6 +249,27 @@ def main() -> int:
         help=f"Path for extracted garment PNG output (default: {DEFAULT_GARMENT_FILENAME} in OUTPUT_DIR)",
     )
     parser.add_argument(
+        "--isolation-method",
+        choices=["ai_prompt", "subtraction"],
+        default="ai_prompt",
+        help="Garment isolation technique (default: 'ai_prompt')",
+    )
+    parser.add_argument(
+        "--component-type",
+        default="torso",
+        help="Component type for AI isolation prompt (default: 'torso')",
+    )
+    parser.add_argument(
+        "--garment-name",
+        default="traditional Vietnamese garment",
+        help="Culturally authentic garment name for AI isolation prompt",
+    )
+    parser.add_argument(
+        "--custom-details",
+        default=None,
+        help="Optional specific details for isolation prompt",
+    )
+    parser.add_argument(
         "--model",
         "-m",
         default=None,
@@ -240,6 +300,10 @@ def main() -> int:
         base_image_path=args.base_image,
         dressed_output_path=args.dressed_output,
         garment_output_path=args.garment_output,
+        isolation_method=args.isolation_method,
+        component_type=args.component_type,
+        garment_name=args.garment_name,
+        custom_isolation_details=args.custom_details,
         model=args.model,
         tolerance=args.tolerance,
         cleanup_noise=not args.no_cleanup_noise,

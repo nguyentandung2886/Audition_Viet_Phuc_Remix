@@ -206,6 +206,75 @@ def crop_and_align_to_canvas(
         return str(save_path)
 
 
+def process_isolated_garment(
+    input_image_path: Union[str, Path],
+    output_path: Union[str, Path],
+    threshold: int = 240,
+    session: Optional[Any] = None,
+    model_name: str = "u2netp",
+    target_width: int = 1024,
+    target_height: int = 1536,
+) -> bool:
+    """Process an AI-isolated garment image into a clean transparent RGBA PNG.
+
+    Removes the solid white background (using rembg or color key fallback) and ensures
+    the asset strictly matches the target canvas size (1024x1536 RGBA).
+
+    Args:
+        input_image_path: Path to the raw AI-isolated image with flat solid background.
+        output_path: Path for saving the transparent RGBA PNG asset.
+        threshold: Color-key fallback threshold.
+        session: Optional rembg session.
+        model_name: rembg model identifier.
+        target_width: Canvas width (default 1024).
+        target_height: Canvas height (default 1536).
+
+    Returns:
+        bool: True if processed successfully, False otherwise.
+    """
+    if not input_image_path or not str(input_image_path).strip():
+        logger.error("process_isolated_garment failed: input_image_path cannot be empty.")
+        return False
+
+    if not output_path or not str(output_path).strip():
+        logger.error("process_isolated_garment failed: output_path cannot be empty.")
+        return False
+
+    resolved_in = resolve_asset_path(str(input_image_path))
+    if not os.path.isfile(resolved_in):
+        logger.error("Input image does not exist: %s", resolved_in)
+        return False
+
+    dest_path = Path(output_path)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 1. Remove background to create transparent RGBA
+    success = remove_background(
+        input_path=resolved_in,
+        output_path=dest_path,
+        threshold=threshold,
+        session=session,
+        model_name=model_name,
+    )
+    if not success:
+        logger.error("Failed to remove background from isolated garment: %s", resolved_in)
+        return False
+
+    # 2. Conform to canvas
+    try:
+        crop_and_align_to_canvas(
+            img_path=dest_path,
+            output_path=dest_path,
+            target_width=target_width,
+            target_height=target_height,
+        )
+        logger.info("Successfully processed isolated garment to %s", dest_path)
+        return True
+    except Exception as exc:
+        logger.error("Failed to conform isolated garment canvas: %s", exc, exc_info=True)
+        return False
+
+
 def _apply_color_key_fallback(img: Image.Image, threshold: int = 240) -> Image.Image:
     """Fallback method to convert near-white background pixels to transparent."""
     rgba = img.convert("RGBA")

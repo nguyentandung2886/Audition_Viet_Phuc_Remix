@@ -64,6 +64,7 @@ export interface OutfitComposerProps {
   layerVisibility?: Record<string, boolean>;
   className?: string;
   showLayerBadge?: boolean;
+  garmentFilterClassName?: string;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
   onCharacterLoaded?: (character: CharacterMetadata | null) => void;
 }
@@ -85,6 +86,7 @@ export default function OutfitComposer({
   layerVisibility,
   className = "",
   showLayerBadge = true,
+  garmentFilterClassName = "",
   onGarmentLoaded,
   onCharacterLoaded,
 }: OutfitComposerProps) {
@@ -268,23 +270,28 @@ export default function OutfitComposer({
         />
       )}
 
-      {/* Garment Layers with Framer Motion transitions */}
-      <AnimatePresence mode="popLayout">
-        {activeLayers.map((layer) => (
-          <motion.img
-            key={`layer-${layer.layerId}-${layer.assetPath}`}
-            src={layer.assetPath}
-            alt={layer.name}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            style={{ zIndex: layer.renderOrder }}
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-            data-testid={`garment-layer-${layer.layerId}`}
-          />
-        ))}
-      </AnimatePresence>
+      {/* Garment Layers with Framer Motion transitions & Isolated Garment Color Filter */}
+      <div
+        className={`absolute inset-0 w-full h-full pointer-events-none transition-all duration-500 ${garmentFilterClassName}`}
+        data-testid="garment-layers-container"
+      >
+        <AnimatePresence mode="popLayout">
+          {activeLayers.map((layer) => (
+            <motion.img
+              key={`layer-${layer.layerId}-${layer.assetPath}`}
+              src={layer.assetPath}
+              alt={layer.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{ zIndex: layer.renderOrder }}
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+              data-testid={`garment-layer-${layer.layerId}`}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Loading Indicator */}
       {(characterLoading || garmentLoading) && (

@@ -285,3 +285,31 @@ def test_end_to_end_integration_with_real_extractor(temp_output_dir, monkeypatch
         # Head/skin area should be transparent (alpha == 0)
         skin_head_pixels = g_arr[32:38, 35:65]
         assert np.all(skin_head_pixels[:, :, 3] == 0)
+
+
+def test_run_pipeline_v2_ai_prompt_isolation(temp_output_dir, monkeypatch):
+    """Verify run_pipeline_v2 uses AI prompt isolation when isolation_method='ai_prompt'."""
+    base_file = temp_output_dir / DEFAULT_BASE_FILENAME
+    base_file.write_bytes(b"fake_base")
+
+    mock_gen = MagicMock(side_effect=lambda **kwargs: kwargs["output_path"].write_bytes(b"dressed_png") or True)
+    mock_isolate = MagicMock(side_effect=lambda **kwargs: kwargs["output_path"].write_bytes(b"raw_isolated") or True)
+    mock_process = MagicMock(side_effect=lambda **kwargs: kwargs["output_path"].write_bytes(b"final_rgba") or True)
+
+    monkeypatch.setattr("pipeline.test_v2.generate_image", mock_gen)
+    monkeypatch.setattr("pipeline.test_v2.isolate_garment_ai", mock_isolate)
+    monkeypatch.setattr("pipeline.test_v2.process_isolated_garment", mock_process)
+
+    success = run_pipeline_v2(
+        isolation_method="ai_prompt",
+        component_type="torso",
+        garment_name="Áo Nhật Bình",
+    )
+
+    assert success is True
+    mock_gen.assert_called_once()
+    mock_isolate.assert_called_once()
+    assert mock_isolate.call_args.kwargs["component_type"] == "torso"
+    assert mock_isolate.call_args.kwargs["garment_name"] == "Áo Nhật Bình"
+    mock_process.assert_called_once()
+

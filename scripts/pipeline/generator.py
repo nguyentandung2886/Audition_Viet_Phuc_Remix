@@ -26,6 +26,127 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL: str = os.environ.get("GEMINI_IMAGE_MODEL", "imagen-3.0-generate-002")
 
 
+def build_garment_isolation_prompt(
+    component_type: str = "torso",
+    garment_name: str = "Vietnamese Ao Dai",
+    custom_details: Optional[str] = None,
+) -> str:
+    """Build a detailed prompt to instruct the AI to erase the character body and isolate the garment.
+
+    Enforces:
+    - 2D anime cel-shaded art style.
+    - Complete erasure of character body (face, skin, limbs, hair) and background.
+    - Geometric stability: strict 1:1 scale, position, and silhouette preservation.
+    - Hollow interior openings (open collar, sleeve cuffs, waistband) without back lining
+      drawing over where the character stands.
+    """
+    comp = component_type.lower().strip()
+    details = f" Specific details: {custom_details.strip()}" if custom_details else ""
+
+    if comp in ("torso", "dress", "robe", "ao_dai", "nhat_binh", "outerwear"):
+        return (
+            f"Professional 2D anime cel-shaded asset isolation.{details} "
+            f"From the reference image, isolate ONLY the {garment_name} {comp} garment. "
+            f"ERASE AND REMOVE EVERYTHING ELSE: completely erase the character's head, face, eyes, hair, ears, "
+            f"neck, shoulder skin, arms, hands, legs, feet, shoes, undergarments, trousers, and the entire background. "
+            f"Replace all erased regions with a pure, solid, flat white background (#FFFFFF). "
+            f"GEOMETRIC AND STRUCTURAL CONSTRAINTS: "
+            f"1. Preserve the exact 1:1 position, silhouette, angle, drapery, and dimensions on the canvas. "
+            f"Do not zoom, rotate, shift, or resize. "
+            f"2. HOLLOW INTERIOR OPENINGS: The neck collar opening, sleeve cuff openings, and bottom hem must be completely "
+            f"hollow and empty (pure flat white background inside). "
+            f"CRITICAL: Do NOT draw the inside back lining, inner back collar, or back fabric covering where the person's body was. "
+            f"The interior must be empty so a character standing behind it can show through naturally. "
+            f"3. Render only the front-facing outer silk fabric, authentic embroidery, trims, closures, and side flaps."
+        )
+    elif comp in ("pants", "trousers", "skirt", "bottom"):
+        return (
+            f"Professional 2D anime cel-shaded asset isolation.{details} "
+            f"From the reference image, isolate ONLY the {garment_name} pants / lower garment. "
+            f"ERASE AND REMOVE EVERYTHING ELSE: completely erase the character's upper body, torso, arms, hands, "
+            f"head, face, neck, legs skin, feet, slippers, and background. "
+            f"Replace all erased areas with a pure solid flat white background (#FFFFFF). "
+            f"GEOMETRIC AND STRUCTURAL CONSTRAINTS: "
+            f"1. Preserve the exact 1:1 scale, vertical alignment, and silhouette of the trousers. "
+            f"2. HOLLOW OPENINGS: The waistband opening and bottom ankle cuff openings must be hollow (flat white background), "
+            f"with no back lining or body skin visible. "
+            f"3. Keep only the outer silk fabric, natural folds, and hem embroidery."
+        )
+    elif comp in ("headpiece", "man", "hat", "crown", "khan_van"):
+        return (
+            f"Professional 2D anime cel-shaded asset isolation.{details} "
+            f"From the reference image, isolate ONLY the {garment_name} headpiece / mấn. "
+            f"ERASE AND REMOVE EVERYTHING ELSE: completely remove all character hair, scalp, ears, forehead, "
+            f"face, body, and background. "
+            f"Replace all erased areas with a pure solid flat white background (#FFFFFF). "
+            f"Preserve the exact circular/curved shape, position, gold embroidery, and scale. "
+            f"The inner head opening where the head sits must be empty (pure flat white background), "
+            f"not filled with hair, scalp, or skin."
+        )
+    elif comp in ("necklace", "accessory", "kieng", "jewelry", "pendant"):
+        return (
+            f"Professional 2D anime cel-shaded asset isolation.{details} "
+            f"From the reference image, isolate ONLY the {garment_name} accessory ({comp}). "
+            f"ERASE AND REMOVE EVERYTHING ELSE: remove the character's neck, chest, clothes, collar, and background. "
+            f"Replace all removed areas with a solid flat white background (#FFFFFF). "
+            f"Preserve the unbroken metallic/carved silhouette and exact coordinates."
+        )
+    else:
+        return (
+            f"Professional 2D anime cel-shaded asset isolation.{details} "
+            f"From the reference image, isolate ONLY the {garment_name} {comp}. "
+            f"ERASE AND REMOVE EVERYTHING ELSE: completely remove the character's body, skin, face, hair, limbs, "
+            f"and background. Replace all erased areas with a pure solid flat white background (#FFFFFF). "
+            f"Preserve the exact 1:1 scale, position, and silhouette. All openings must be hollowed out with no internal back lining."
+        )
+
+
+def isolate_garment_ai(
+    dressed_image_path: Union[str, Path],
+    output_path: Union[str, Path],
+    component_type: str = "torso",
+    garment_name: str = "traditional Vietnamese garment",
+    custom_details: Optional[str] = None,
+    client: Optional[Any] = None,
+    model: Optional[str] = None,
+    aspect_ratio: Optional[str] = "2:3",
+) -> bool:
+    """Isolate a specific garment component from a dressed character image using AI editing.
+
+    Uses Gemini image-to-image editing with an explicit prompt that removes character body
+    parts and background, leaving only the hollowed, geometrically-aligned garment component
+    on a solid flat white background.
+
+    Args:
+        dressed_image_path: Path to the input dressed character image.
+        output_path: Destination path for the isolated garment image.
+        component_type: Type of component ('torso', 'pants', 'headpiece', 'necklace').
+        garment_name: Cultural name of the garment (e.g. 'Áo Nhật Bình', 'Áo Dài').
+        custom_details: Optional specific descriptive details for prompt.
+        client: Optional pre-configured genai.Client instance.
+        model: Optional model override.
+        aspect_ratio: Canvas aspect ratio (default '2:3').
+
+    Returns:
+        bool: True if generation succeeded and image was saved, False otherwise.
+    """
+    prompt = build_garment_isolation_prompt(
+        component_type=component_type,
+        garment_name=garment_name,
+        custom_details=custom_details,
+    )
+    logger.info("Isolating %s (%s) via AI image editing...", component_type, garment_name)
+    return generate_image(
+        prompt=prompt,
+        output_path=output_path,
+        model=model,
+        client=client,
+        aspect_ratio=aspect_ratio,
+        reference_image_path=dressed_image_path,
+    )
+
+
+
 def generate_image(
     prompt: str,
     output_path: Union[str, Path],

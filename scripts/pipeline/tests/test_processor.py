@@ -399,3 +399,48 @@ def test_extract_garment_noise_cleanup():
             # The large garment should be preserved
             assert out_img.getpixel((30, 35))[3] == 255
 
+
+def test_process_isolated_garment(monkeypatch):
+    """Verify process_isolated_garment removes background and conforms canvas."""
+    import numpy as np
+    from pipeline.processor import process_isolated_garment
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        raw_in = Path(temp_dir) / "raw_isolated.jpg"
+        out_png = Path(temp_dir) / "garment_clean.png"
+
+        # Create white background with red garment in center
+        img = Image.new("RGB", (200, 300), color="white")
+        arr = np.array(img)
+        arr[50:250, 50:150] = [200, 30, 40]
+        Image.fromarray(arr).save(raw_in, format="JPEG")
+
+        def mock_rembg_fail(*args, **kwargs):
+            raise RuntimeError("rembg disabled in test")
+
+        monkeypatch.setattr("rembg.remove", mock_rembg_fail)
+
+        success = process_isolated_garment(
+            input_image_path=raw_in,
+            output_path=out_png,
+            target_width=1024,
+            target_height=1536,
+        )
+
+        assert success is True
+        assert out_png.exists()
+        with Image.open(out_png) as result:
+            assert result.size == (1024, 1536)
+            assert result.mode == "RGBA"
+            # Corner background should be transparent
+            assert result.getpixel((0, 0))[3] == 0
+
+
+def test_process_isolated_garment_missing_input():
+    """Verify process_isolated_garment handles missing input gracefully."""
+    from pipeline.processor import process_isolated_garment
+
+    assert process_isolated_garment("", "out.png") is False
+    assert process_isolated_garment("non_existent.png", "out.png") is False
+
+

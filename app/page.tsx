@@ -15,8 +15,8 @@ export default function Home() {
     headpiece: true,
   });
 
-  // Color Mood / Hue tone filter
-  const [activeMood, setActiveMood] = useState<"red" | "jade" | "gold">("red");
+  // Color Mood / Hue tone filter per garment
+  const [activeMood, setActiveMood] = useState<string>("default");
 
   const toggleLayer = (layerKey: string) => {
     setLayerVisibility((prev) => ({
@@ -25,12 +25,25 @@ export default function Home() {
     }));
   };
 
-  // Color tone filter styles
-  const moodFilterClass = {
-    red: "",
-    jade: "hue-rotate-[140deg] saturate-125",
-    gold: "hue-rotate-[45deg] saturate-150 brightness-110",
-  }[activeMood];
+  // Garment-specific color palettes
+  const isNhatBinh = selectedGarment === "nhat_binh/royal_blue";
+
+  const colorMoods = isNhatBinh
+    ? [
+        { id: "default", name: "Lam Sắc Hoàng Triều", color: "bg-blue-600", filter: "" },
+        { id: "purple", name: "Tím Huế Cung Đình", color: "bg-purple-600", filter: "hue-rotate-[45deg] saturate-125" },
+        { id: "ruby", name: "Đỏ Thắm Hoàng Gia", color: "bg-red-600", filter: "hue-rotate-[140deg] saturate-130" },
+        { id: "emerald", name: "Lục Bảo Thượng Uyển", color: "bg-emerald-600", filter: "hue-rotate-[260deg] saturate-120" },
+      ]
+    : [
+        { id: "default", name: "Đỏ Hoàng Triều", color: "bg-red-600", filter: "" },
+        { id: "jade", name: "Ngọc Bích Cung Đình", color: "bg-emerald-600", filter: "hue-rotate-[140deg] saturate-125" },
+        { id: "gold", name: "Hoàng Yến Quý Tộc", color: "bg-amber-500", filter: "hue-rotate-[45deg] saturate-150 brightness-110" },
+        { id: "blue", name: "Lam Sắc Thùy Mị", color: "bg-blue-600", filter: "hue-rotate-[210deg] saturate-125" },
+      ];
+
+  const currentMoodObj = colorMoods.find((m) => m.id === activeMood) || colorMoods[0];
+  const moodFilterClass = currentMoodObj.filter;
 
   return (
     <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col font-sans selection:bg-red-900 selection:text-white">
@@ -83,60 +96,68 @@ export default function Home() {
             <div className="relative group">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-b from-red-600/25 via-amber-500/15 to-transparent blur-2xl transition-all duration-700 group-hover:from-red-600/35" />
               
-              {/* Core Component Render with Mood Tone filter */}
-              <div className={`transition-all duration-500 ${moodFilterClass}`}>
-                <OutfitComposer
-                  characterId="base_01"
-                  garmentId={selectedGarment}
-                  layerVisibility={layerVisibility}
-                  onGarmentLoaded={setActiveGarmentMeta}
-                  className="relative z-10"
-                />
-              </div>
+              {/* Core Component Render with Garment-Only Color Mood (Base character strictly unfiltered) */}
+              <OutfitComposer
+                characterId="base_01"
+                garmentId={selectedGarment}
+                layerVisibility={layerVisibility}
+                onGarmentLoaded={setActiveGarmentMeta}
+                garmentFilterClassName={moodFilterClass}
+                className="relative z-10"
+              />
             </div>
 
             {/* Garment Quick Switcher Bar */}
             <div className="mt-5 p-2 rounded-xl bg-zinc-900/70 border border-white/5 backdrop-blur-md flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => setSelectedGarment("ao_dai/red")}
+                onClick={() => {
+                  setSelectedGarment("ao_dai/red");
+                  setActiveMood("default");
+                }}
                 className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                   selectedGarment === "ao_dai/red"
                     ? "bg-red-950/80 border border-red-500/50 text-red-200 shadow-md shadow-red-950/40"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Áo Dài Anime
+                Áo Dài Đỏ
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedGarment(null)}
+                onClick={() => {
+                  setSelectedGarment("nhat_binh/royal_blue");
+                  setActiveMood("default");
+                }}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                  selectedGarment === "nhat_binh/royal_blue"
+                    ? "bg-blue-950/80 border border-blue-500/50 text-blue-200 shadow-md shadow-blue-950/40"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                }`}
+              >
+                Áo Nhật Bình
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedGarment(null);
+                  setActiveMood("default");
+                }}
                 className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                   selectedGarment === null
                     ? "bg-zinc-800 border border-zinc-600 text-zinc-100 shadow-md"
                     : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
                 }`}
               >
-                Base Nhân Vật Anime
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedGarment("ao_dai/missing_test")}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                  selectedGarment === "ao_dai/missing_test"
-                    ? "bg-amber-950/80 border border-amber-500/50 text-amber-200 shadow-md shadow-amber-950/40"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-                }`}
-              >
-                Test Fallback Lỗi
+                Base Nhân Vật
               </button>
             </div>
 
             {/* Modular Component Layer Toggles */}
-            {selectedGarment === "ao_dai/red" && (
+            {selectedGarment && (
               <div className="mt-4 p-4 rounded-xl bg-zinc-900/50 border border-amber-500/20 backdrop-blur-md">
                 <div className="flex items-center justify-between mb-3 text-xs font-mono text-zinc-400 uppercase tracking-wider">
-                  <span>Tùy Biến Phân Lớp (Modular Layers)</span>
+                  <span>Tùy Biến Phân Lớp ({activeGarmentMeta?.name || "Modular Layers"})</span>
                   <span className="text-amber-400 text-[10px]">Framer Motion</span>
                 </div>
 
@@ -202,36 +223,30 @@ export default function Home() {
                   </button>
                 </div>
 
-                {/* Color Mood Selector */}
+                {/* Color Mood Selector - Isolated solely to garment layers */}
                 <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-                    Sắc Thái / Color Mood:
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      title="Đỏ Hoàng Triều"
-                      onClick={() => setActiveMood("red")}
-                      className={`w-6 h-6 rounded-full bg-red-600 transition-all ${
-                        activeMood === "red" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      title="Ngọc Bích Cung Đình"
-                      onClick={() => setActiveMood("jade")}
-                      className={`w-6 h-6 rounded-full bg-emerald-600 transition-all ${
-                        activeMood === "jade" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      title="Hoàng Yến Quý Tộc"
-                      onClick={() => setActiveMood("gold")}
-                      className={`w-6 h-6 rounded-full bg-amber-500 transition-all ${
-                        activeMood === "gold" ? "ring-2 ring-white scale-110" : "opacity-60 hover:opacity-100"
-                      }`}
-                    />
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                      Sắc Thái Trang Phục:
+                    </span>
+                    <span className="text-[10px] text-amber-400 font-mono">
+                      {currentMoodObj.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {colorMoods.map((mood) => (
+                      <button
+                        key={mood.id}
+                        type="button"
+                        title={mood.name}
+                        onClick={() => setActiveMood(mood.id)}
+                        className={`w-6 h-6 rounded-full ${mood.color} transition-all ${
+                          activeMood === mood.id
+                            ? "ring-2 ring-white scale-110 shadow-md shadow-white/30"
+                            : "opacity-60 hover:opacity-100 hover:scale-105"
+                        }`}
+                      />
+                    ))}
                   </div>
                 </div>
               </div>

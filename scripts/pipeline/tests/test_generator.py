@@ -374,3 +374,53 @@ def test_generate_image_edit_api_exception(monkeypatch):
         assert not out_file.exists()
 
 
+def test_build_garment_isolation_prompt():
+    """Verify isolation prompts enforce anime style, hollow openings, and body removal."""
+    from pipeline.generator import build_garment_isolation_prompt
+
+    # Test torso
+    torso_prompt = build_garment_isolation_prompt("torso", "Áo Nhật Bình")
+    assert "isolate ONLY the Áo Nhật Bình torso" in torso_prompt
+    assert "HOLLOW INTERIOR OPENINGS" in torso_prompt
+    assert "Do NOT draw the inside back lining" in torso_prompt
+    assert "ERASE AND REMOVE EVERYTHING ELSE" in torso_prompt
+
+    # Test pants
+    pants_prompt = build_garment_isolation_prompt("pants", "Áo Nhật Bình", custom_details="White silk")
+    assert "pants / lower garment" in pants_prompt
+    assert "White silk" in pants_prompt
+    assert "waistband opening" in pants_prompt
+
+    # Test headpiece
+    head_prompt = build_garment_isolation_prompt("headpiece", "Khăn Vành")
+    assert "headpiece / mấn" in head_prompt
+    assert "inner head opening where the head sits must be empty" in head_prompt
+
+    # Test necklace
+    neck_prompt = build_garment_isolation_prompt("necklace", "Ngọc Bội")
+    assert "accessory" in neck_prompt
+
+
+def test_isolate_garment_ai_calls_generate_image(monkeypatch):
+    """Verify isolate_garment_ai delegates to generate_image with isolation prompt."""
+    from pipeline.generator import isolate_garment_ai
+
+    mock_generate = MagicMock(return_value=True)
+    monkeypatch.setattr("pipeline.generator.generate_image", mock_generate)
+
+    result = isolate_garment_ai(
+        dressed_image_path="ref_dressed.png",
+        output_path="out_isolated.png",
+        component_type="torso",
+        garment_name="Áo Nhật Bình",
+    )
+
+    assert result is True
+    mock_generate.assert_called_once()
+    kwargs = mock_generate.call_args.kwargs
+    assert "Áo Nhật Bình" in kwargs["prompt"]
+    assert kwargs["output_path"] == "out_isolated.png"
+    assert kwargs["reference_image_path"] == "ref_dressed.png"
+
+
+
