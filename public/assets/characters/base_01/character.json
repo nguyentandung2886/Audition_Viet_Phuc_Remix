@@ -1,0 +1,36 @@
+{
+  "characterId": "base_01",
+  "name": "Nữ Sinh Anime Việt Nam (Base Character)",
+  "artStyle": "Anime 2D Cel-Shaded",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "anchors": {
+    "head": {
+      "x": 0.5,
+      "y": 0.12
+    },
+    "neck": {
+      "x": 0.5,
+      "y": 0.28
+    },
+    "left_shoulder": {
+      "x": 0.4,
+      "y": 0.31
+    },
+    "right_shoulder": {
+      "x": 0.6,
+      "y": 0.31
+    },
+    "waist": {
+      "x": 0.5,
+      "y": 0.49
+    },
+    "hips": {
+      "x": 0.5,
+      "y": 0.6
+    }
+  },
+  "assetPath": "/assets/characters/base_01/base.png"
+}

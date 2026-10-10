@@ -25,7 +25,53 @@ next-env.d.ts
 .env*.local
 
 # Pipeline Generated Assets
-/public/assets/
+/public/assets/**
+!/public/assets/approved/
+!/public/assets/approved/scenes/
+!/public/assets/approved/scenes/ao_dai/
+!/public/assets/approved/scenes/ao_dai/background.png
+!/public/assets/approved/scenes/ao_dai/foreground.png
+!/public/assets/approved/scenes/ao_dai/room-background-v1.png
+!/public/assets/approved/scenes/ao_dai/room-foreground-v1.png
+!/public/assets/approved/scenes/ao_dai/scene.json
+!/public/assets/approved/scenes/nhat_binh/
+!/public/assets/approved/scenes/nhat_binh/background.png
+!/public/assets/approved/scenes/giao_linh/
+!/public/assets/approved/scenes/giao_linh/background.png
+!/public/assets/approved/garments/
+!/public/assets/approved/garments/ao_dai/
+!/public/assets/approved/garments/ao_dai/red/
+!/public/assets/approved/garments/ao_dai/red/pants.png
+!/public/assets/approved/garments/ao_dai/red/torso.png
+!/public/assets/approved/garments/ao_dai/red/necklace.png
+!/public/assets/approved/garments/ao_dai/red/headpiece.png
+!/public/assets/approved/garments/ao_dai/red/garment.json
+!/public/assets/approved/garments/ao_dai/indigo/
+!/public/assets/approved/garments/ao_dai/indigo/pants.png
+!/public/assets/approved/garments/ao_dai/indigo/torso.png
+!/public/assets/approved/garments/ao_dai/indigo/necklace.png
+!/public/assets/approved/garments/ao_dai/indigo/headpiece.png
+!/public/assets/approved/garments/ao_dai/indigo/garment.json
+!/public/assets/characters/
+!/public/assets/characters/base_01/
+!/public/assets/characters/base_01/base.png
+!/public/assets/characters/base_01/character.json
+!/public/assets/garments/
+!/public/assets/garments/ao_dai/
+!/public/assets/garments/ao_dai/red/
+!/public/assets/garments/ao_dai/red/*.png
+!/public/assets/garments/ao_dai/red/garment.json
+!/public/assets/garments/nhat_binh/
+!/public/assets/garments/nhat_binh/royal_blue/
+!/public/assets/garments/nhat_binh/royal_blue/garment.json
+!/public/assets/garments/nhat_binh/royal_blue/pants.png
+!/public/assets/garments/nhat_binh/royal_blue/torso.png
+!/public/assets/garments/nhat_binh/royal_blue/necklace.png
+!/public/assets/garments/nhat_binh/royal_blue/headpiece.png
+!/public/assets/garments/giao_linh/
+!/public/assets/garments/giao_linh/emerald/
+!/public/assets/garments/giao_linh/emerald/*.png
+!/public/assets/garments/giao_linh/emerald/garment.json
 
 scripts/pipeline/temp_processing/
 

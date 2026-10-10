@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "garmentId": "ao_dai",
+  "variantId": "red",
+  "label": "Đỏ son",
+  "version": "v001",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "normalizationBox": {
+    "left": 300,
+    "top": 395,
+    "right": 724,
+    "bottom": 1410
+  },
+  "visibleBounds": {
+    "left": 309,
+    "top": 395,
+    "right": 714,
+    "bottom": 1410
+  },
+  "layerNormalization": {
+    "pants": {
+      "box": {
+        "left": 350,
+        "top": 720,
+        "right": 674,
+        "bottom": 1370
+      },
+      "visibleBounds": {
+        "left": 389,
+        "top": 720,
+        "right": 635,
+        "bottom": 1370
+      }
+    },
+    "torso": {
+      "box": {
+        "left": 300,
+        "top": 395,
+        "right": 724,
+        "bottom": 1410
+      },
+      "visibleBounds": {
+        "left": 309,
+        "top": 395,
+        "right": 714,
+        "bottom": 1410
+      }
+    },
+    "necklace": {
+      "box": {
+        "left": 455,
+        "top": 400,
+        "right": 569,
+        "bottom": 475
+      },
+      "visibleBounds": {
+        "left": 455,
+        "top": 411,
+        "right": 569,
+        "bottom": 464
+      }
+    },
+    "headpiece": {
+      "box": {
+        "left": 405,
+        "top": 150,
+        "right": 619,
+        "bottom": 245
+      },
+      "visibleBounds": {
+        "left": 432,
+        "top": 150,
+        "right": 591,
+        "bottom": 245
+      }
+    }
+  },
+  "layers": [
+    {
+      "layerId": "pants",
+      "assetPath": "/assets/approved/garments/ao_dai/red/pants.png",
+      "renderOrder": 25,
+      "required": true,
+      "width": 1024,
+      "height": 1536,
+      "sourceVersion": "pants-white-v001",
+      "checksumSha256": "a9a4569c059f781b35f3b2bf1b3a68b64ba6ad6e1a95bd35fe40210a28df19c3"
+    },
+    {
+      "layerId": "torso",
+      "assetPath": "/assets/approved/garments/ao_dai/red/torso.png",
+      "renderOrder": 40,
+      "required": true,
+      "width": 1024,
+      "height": 1536,
+      "sourceVersion": "torso-red-white-v001",
+      "checksumSha256": "17f2644a8fb6e4715004f32d74d1bc480bc78c271a2c8815f09ee2122679b530"
+    },
+    {
+      "layerId": "necklace",
+      "assetPath": "/assets/approved/garments/ao_dai/red/necklace.png",
+      "renderOrder": 50,
+      "required": false,
+      "width": 1024,
+      "height": 1536,
+      "sourceVersion": "necklace-white-v001",
+      "checksumSha256": "c90082313d93fe52c91db19cb08c7f29218d4d8001cd666f4641eeb2ad259376"
+    },
+    {
+      "layerId": "headpiece",
+      "assetPath": "/assets/approved/garments/ao_dai/red/headpiece.png",
+      "renderOrder": 60,
+      "required": false,
+      "width": 1024,
+      "height": 1536,
+      "sourceVersion": "headpiece-red-white-v001",
+      "checksumSha256": "ed81c2a75a7132676c96f484946901db8c46887953243efb4535e53ac140b27b"
+    }
+  ],
+  "provenance": {
+    "sourceTool": "built-in image_gen",
+    "sources": [
+      {
+        "layerId": "pants",
+        "sourceVersion": "pants-white-v001",
+        "sourcePath": "scripts/pipeline/temp_processing/ao-dai/pants-white-v001.png"
+      },
+      {
+        "layerId": "torso",
+        "sourceVersion": "torso-red-white-v001",
+        "sourcePath": "scripts/pipeline/temp_processing/ao-dai/torso-red-white-v001.png"
+      },
+      {
+        "layerId": "necklace",
+        "sourceVersion": "necklace-white-v001",
+        "sourcePath": "scripts/pipeline/temp_processing/ao-dai/necklace-white-v001.png"
+      },
+      {
+        "layerId": "headpiece",
+        "sourceVersion": "headpiece-red-white-v001",
+        "sourcePath": "scripts/pipeline/temp_processing/ao-dai/headpiece-red-white-v001.png"
+      }
+    ],
+    "processingPipeline": "scripts/pipeline/process-approved-assets.mjs",
+    "colorMethod": "shared alpha masks; deterministic masked recolor for torso and headpiece"
+  },
+  "review": {
+    "status": "draft",
+    "technical": "pending",
+    "visual": "pending",
+    "cultural": "pending"
+  }
+}

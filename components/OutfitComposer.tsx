@@ -1,378 +1,232 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import Image from "next/image";
+import gsap from "gsap";
+import { getGarment } from "@/lib/viet-phuc/catalog";
+import { metadataForSelection, normalizeGarmentMetadata } from "@/lib/viet-phuc/garment-metadata";
+import type { GarmentLayer, GarmentMetadata } from "@/lib/viet-phuc/types";
 
-export interface CharacterCanvas {
-  width: number;
-  height: number;
-}
-
-export interface CharacterAnchors {
-  [key: string]: { x: number; y: number };
-}
-
+export type { GarmentMetadata } from "@/lib/viet-phuc/types";
 export interface CharacterMetadata {
-  characterId: string;
-  name: string;
-  canvas: CharacterCanvas;
-  anchors?: CharacterAnchors;
-  assetPath: string;
+  characterId: string; name: string; canvas: { width: number; height: number }; assetPath: string;
 }
-
-export interface GarmentLayer {
-  layerId: string;
-  name: string;
-  renderOrder: number;
-  assetPath: string;
-  visible?: boolean;
-}
-
-export interface GarmentComponent {
-  assetId: string;
-  name: string;
-  characterId?: string;
-  garmentType?: string;
-  componentType?: string;
-  canvasWidth?: number;
-  canvasHeight?: number;
-  renderOrder: number;
-  anchorReferences?: string[];
-  colorVariants?: string[];
-  alphaAvailable?: boolean;
-  filePath: string;
-}
-
-export interface GarmentMetadata {
-  garmentId: string;
-  name: string;
-  characterId: string;
-  garmentType?: string;
-  dynasty?: string;
-  gender?: string;
-  description?: string;
-  historicalFact?: string;
-  canvas?: CharacterCanvas;
-  renderOrder?: number;
-  layers?: GarmentLayer[];
-  components?: GarmentComponent[];
-}
-
 export interface OutfitComposerProps {
   characterId: string;
   garmentId?: string | null;
+  garmentFilter?: string;
+  reducedMotion?: boolean;
   layerVisibility?: Record<string, boolean>;
   className?: string;
-  showLayerBadge?: boolean;
-  garmentFilterClassName?: string;
   onGarmentLoaded?: (garment: GarmentMetadata | null) => void;
   onCharacterLoaded?: (character: CharacterMetadata | null) => void;
 }
+interface RetainedPreview { garmentId: string; name: string; characterPath: string; layers: GarmentLayer[]; garmentFilter: string }
+interface ImageState {
+  key: string; loadedIds: string[]; failedAccessoryIds: string[]; failedRequiredIds: string[];
+  retained: RetainedPreview | null;
+}
 
-/**
- * OutfitComposer renders an anime mannequin base character and dynamically composites
- * transparent garment layers over it using Framer Motion layer transitions.
- * 
- * Features:
- * - Reads character.json & garment.json from /assets/...
- * - Graceful fallback handling for missing metadata or assets
- * - Framer Motion layer fade-in transitions (initial opacity 0 -> animate 1)
- * - Strict 1024x1536 canonical aspect ratio preservation
- * - High-elegance Vietnamese editorial aesthetic
- */
-export default function OutfitComposer({
-  characterId,
-  garmentId,
-  layerVisibility,
-  className = "",
-  showLayerBadge = true,
-  garmentFilterClassName = "",
-  onGarmentLoaded,
-  onCharacterLoaded,
-}: OutfitComposerProps) {
-  const [character, setCharacter] = useState<CharacterMetadata | null>(null);
-  const [characterError, setCharacterError] = useState<string | null>(null);
-  const [loadedCharacterId, setLoadedCharacterId] = useState<string | null>(null);
+const layerMotion = {
+  torso: { duration: 0.48, x: 2.4, rotation: 0.8, skew: 1.2, origin: "50% 30%" },
+  pants: { duration: 0.42, x: 1.6, rotation: 0.45, skew: 0.7, origin: "50% 48%" },
+  necklace: { duration: 0.3, x: 0.7, rotation: 2, skew: 0, origin: "50% 31%" },
+  headpiece: { duration: 0.34, x: 0.8, rotation: 2.4, skew: 0, origin: "50% 18%" },
+} as const;
 
-  const [garment, setGarment] = useState<GarmentMetadata | null>(null);
-  const [garmentError, setGarmentError] = useState<string | null>(null);
-  const [loadedGarmentId, setLoadedGarmentId] = useState<string | null | undefined>(undefined);
+interface MotionLayerProps {
+  layer: GarmentLayer;
+  visible: boolean;
+  filter: string;
+  reducedMotion: boolean;
+  stageReady: boolean;
+  requestKey: string;
+  onLoad: () => void;
+  onError: () => void;
+}
 
-  // Keep latest callback references in refs to break infinite render loops
-  const onGarmentLoadedRef = useRef(onGarmentLoaded);
-  useEffect(() => {
-    onGarmentLoadedRef.current = onGarmentLoaded;
-  });
+function MotionLayer({ layer, visible, filter, reducedMotion, stageReady, requestKey, onLoad, onError }: MotionLayerProps) {
+  const [mounted, setMounted] = useState(visible);
+  const [imageReady, setImageReady] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const previousFilter = useRef(filter);
+  const entered = useRef(false);
 
-  const onCharacterLoadedRef = useRef(onCharacterLoaded);
-  useEffect(() => {
-    onCharacterLoadedRef.current = onCharacterLoaded;
-  });
+  if (visible && !mounted) setMounted(true);
 
-  // Derive loading status idiomatically
-  const characterLoading = Boolean(characterId && loadedCharacterId !== characterId && !characterError);
-  const garmentLoading = Boolean(garmentId && loadedGarmentId !== garmentId && !garmentError);
-
-  // 1. Load Base Character metadata
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchCharacter() {
-      try {
-        const res = await fetch(`/assets/characters/${characterId}/character.json`);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: Không tìm thấy character.json tại /assets/characters/${characterId}/`);
-        }
-        const data: CharacterMetadata = await res.json();
-        if (isMounted) {
-          setCharacter(data);
-          setCharacterError(null);
-          setLoadedCharacterId(characterId);
-          onCharacterLoadedRef.current?.(data);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const errMsg = err instanceof Error ? err.message : "Lỗi không xác định khi tải nhân vật";
-          const fallbackData: CharacterMetadata = {
-            characterId,
-            name: `Base Character (${characterId})`,
-            canvas: { width: 1024, height: 1536 },
-            assetPath: `/assets/characters/${characterId}/base.png`,
-          };
-          setCharacter(fallbackData);
-          setCharacterError(errMsg);
-          setLoadedCharacterId(characterId);
-          onCharacterLoadedRef.current?.(fallbackData);
-        }
-      }
-    }
-
-    if (characterId) {
-      void fetchCharacter();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [characterId]);
-
-  // 2. Load Garment metadata
-  useEffect(() => {
-    let isMounted = true;
-
-    if (!garmentId) {
-      queueMicrotask(() => {
-        if (!isMounted) return;
-        setGarment(null);
-        setGarmentError(null);
-        setLoadedGarmentId(null);
-        onGarmentLoadedRef.current?.(null);
-      });
+  useLayoutEffect(() => {
+    if (!mounted || !wrapperRef.current || !imageReady || !stageReady) return;
+    const target = wrapperRef.current;
+    const motion = layerMotion[layer.layerId];
+    gsap.killTweensOf(target);
+    if (visible && entered.current) {
+      gsap.set(target, { autoAlpha: 1, xPercent: 0, scale: 1, rotation: 0, skewX: 0 });
       return;
     }
+    if (visible) entered.current = true;
+    const animation = reducedMotion
+      ? gsap.to(target, { autoAlpha: visible ? 1 : 0, duration: 0.12, onComplete: () => { if (!visible) { entered.current = false; setMounted(false); } } })
+      : visible
+        ? gsap.fromTo(target,
+            { autoAlpha: 0, xPercent: motion.x, scale: layer.isOptional ? 0.94 : 0.97, rotation: motion.rotation, skewX: motion.skew },
+            { autoAlpha: 1, xPercent: 0, scale: 1, rotation: 0, skewX: 0, duration: motion.duration, ease: "power3.out", clearProps: "willChange" })
+        : gsap.to(target, { keyframes: [
+          { xPercent: -motion.x * 0.45, rotation: -motion.rotation * 0.55, duration: motion.duration * 0.28 },
+          { xPercent: motion.x, rotation: motion.rotation, autoAlpha: 0, scale: 0.98, duration: motion.duration * 0.72 },
+        ], ease: "power2.in", onComplete: () => { entered.current = false; setMounted(false); } });
+    return () => { animation.kill(); };
+  }, [visible, mounted, imageReady, stageReady, reducedMotion, layer.layerId, layer.isOptional]);
 
-    async function fetchGarment() {
+  useEffect(() => {
+    if (layer.layerId !== "torso" || previousFilter.current === filter) return;
+    previousFilter.current = filter;
+    if (!visible || !wrapperRef.current || reducedMotion) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(wrapperRef.current, { rotation: -0.55, xPercent: -0.5 }, { rotation: 0, xPercent: 0, duration: 0.4, ease: "sine.out" });
+    }, wrapperRef);
+    return () => context.revert();
+  }, [filter, visible, reducedMotion, layer.layerId]);
+
+  if (!mounted) return null;
+  return <div ref={wrapperRef} className="absolute inset-0 pointer-events-none garment-motion-layer" data-layer-motion={layer.layerId} style={{ zIndex: layer.renderOrder, transformOrigin: layerMotion[layer.layerId].origin, willChange: "transform, opacity", opacity: 0 }}>
+    <Image key={`${requestKey}:${layer.assetPath}`} src={layer.assetPath} alt={layer.name} fill unoptimized loading="eager" sizes="540px" onLoad={() => { setImageReady(true); onLoad(); }} onError={onError} style={{ filter: layer.layerId === "torso" ? filter : undefined }} className="object-contain" data-testid={`garment-layer-${layer.layerId}`} />
+  </div>;
+}
+
+export default function OutfitComposer({ characterId, garmentId, garmentFilter = "none", reducedMotion = false, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
+  const [retry, setRetry] = useState(0);
+  const selectionKey = `${characterId}:${garmentId}:${retry}`;
+  const [request, setRequest] = useState({ selectionKey, generation: 0 });
+  // Adjust during render so returning to an earlier ID cannot briefly restore its frame.
+  if (request.selectionKey !== selectionKey) {
+    setRequest({ selectionKey, generation: request.generation + 1 });
+  }
+  const requestKey = `${selectionKey}:${request.generation}`;
+  const [loaded, setLoaded] = useState<{ key: string; metadata: GarmentMetadata | null; error: boolean } | null>(null);
+  const [character, setCharacter] = useState<CharacterMetadata | null>(null);
+  const [images, setImages] = useState<ImageState>({ key: "", loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: null });
+  const notifyGarment = useEffectEvent((value: GarmentMetadata | null) => onGarmentLoaded?.(value));
+  const notifyCharacter = useEffectEvent((value: CharacterMetadata) => onCharacterLoaded?.(value));
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    async function load() {
+      if (characterId !== "base_01") return;
+      // Use the approved direct character image when character metadata is unavailable.
+      const value: CharacterMetadata = {
+        characterId, name: "Nhân vật minh họa", canvas: { width: 1024, height: 1536 },
+        assetPath: `/assets/characters/${characterId}/base.png`,
+      };
       try {
-        const res = await fetch(`/assets/garments/${garmentId}/garment.json`);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: Không tìm thấy garment.json cho '${garmentId}'`);
-        }
-        const data: GarmentMetadata = await res.json();
+        const response = await fetch(`/assets/characters/${characterId}/character.json`, { signal: controller.signal });
+        if (!response.ok) throw new Error("unavailable");
+        const data: unknown = await response.json();
+        if (!data || typeof data !== "object" || !("characterId" in data) || data.characterId !== characterId) throw new Error("invalid");
+      } catch {
+        if (!active) return;
+      }
+      if (active) { setCharacter(value); notifyCharacter(value); }
+    }
+    void load();
+    return () => { active = false; controller.abort(); };
+  }, [characterId, retry]);
 
-        // Normalize layers from either 'layers' or 'components' array
-        let layersList: GarmentLayer[] = [];
-        if (Array.isArray(data.layers) && data.layers.length > 0) {
-          layersList = data.layers;
-        } else if (Array.isArray(data.components) && data.components.length > 0) {
-          layersList = data.components.map((c) => ({
-            layerId: c.assetId,
-            name: c.name,
-            renderOrder: c.renderOrder ?? 10,
-            assetPath: c.filePath,
-            visible: true,
-          }));
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const entry = garmentId ? getGarment(garmentId) : undefined;
+        if (!entry) throw new Error("unavailable");
+        const response = await fetch(entry.variants[0].metadataPath, { signal: controller.signal });
+        if (!response.ok) throw new Error("unavailable");
+        const result = normalizeGarmentMetadata(await response.json(), entry.id, characterId);
+        if (!result.ok) throw new Error("invalid");
+        if (active) {
+          setLoaded({ key: requestKey, metadata: result.value, error: false });
+          notifyGarment(result.value);
         }
-
-        const normalizedGarment: GarmentMetadata = {
-          ...data,
-          layers: layersList,
-        };
-
-        if (isMounted) {
-          setGarment(normalizedGarment);
-          setGarmentError(null);
-          setLoadedGarmentId(garmentId);
-          onGarmentLoadedRef.current?.(normalizedGarment);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const errMsg = err instanceof Error ? err.message : `Lỗi tải trang phục '${garmentId}'`;
-          setGarment(null);
-          setGarmentError(errMsg);
-          setLoadedGarmentId(garmentId);
-          onGarmentLoadedRef.current?.(null);
+      } catch {
+        if (active) {
+          setLoaded({ key: requestKey, metadata: null, error: true });
+          notifyGarment(null);
         }
       }
     }
+    void load();
+    return () => { active = false; controller.abort(); };
+  }, [characterId, garmentId, requestKey]);
 
-    void fetchGarment();
+  const metadata = metadataForSelection(loaded?.key === requestKey ? loaded.metadata : null, garmentId);
+  const frame: Pick<ImageState, "loadedIds" | "failedAccessoryIds" | "failedRequiredIds"> = images.key === requestKey ? images : { loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [] };
+  const activeLayers = (metadata?.layers ?? []).filter((layer) => layerVisibility?.[layer.layerId] !== false &&
+    (!layer.isOptional || (layer.visible && !frame.failedAccessoryIds.includes(layer.layerId))));
+  const renderableLayers = (metadata?.layers ?? []).filter((layer) => !layer.isOptional ||
+    (layer.visible && !frame.failedAccessoryIds.includes(layer.layerId)));
+  const characterPath = character?.characterId === characterId ? character.assetPath : null;
+  const requiredImageIds = ["character", ...activeLayers.filter((layer) => !layer.isOptional).map((layer) => layer.layerId)];
+  const hasActiveImageFailure = requiredImageIds.some((id) => frame.failedRequiredIds.includes(id));
+  const ready = Boolean(metadata && characterPath && !hasActiveImageFailure && requiredImageIds.every((id) => frame.loadedIds.includes(id)));
+  const error = (loaded?.key === requestKey && loaded.error) || hasActiveImageFailure || characterId !== "base_01";
+  const retained = !ready && images.retained?.characterPath === characterPath ? images.retained : null;
 
-    return () => {
-      isMounted = false;
-    };
-  }, [garmentId]);
+  if (ready && metadata && characterPath) {
+    const completeLayers = activeLayers.filter((layer) => frame.loadedIds.includes(layer.layerId));
+    const snapshot = images.retained;
+    if (!snapshot || snapshot.garmentId !== metadata.garmentId || snapshot.characterPath !== characterPath ||
+      snapshot.layers.length !== completeLayers.length || snapshot.garmentFilter !== garmentFilter || snapshot.layers.some((layer, index) => layer.assetPath !== completeLayers[index].assetPath)) {
+      // Visibility changes have no image event; remember the latest complete visible outfit.
+      setImages({ ...images, retained: { garmentId: metadata.garmentId, name: metadata.name, characterPath, layers: completeLayers, garmentFilter } });
+    }
+  }
 
-  // If garmentId was set to null/empty, clear garment state when active
-  const effectiveGarment = garmentId ? garment : null;
+  function imageLoaded(layerId: string) {
+    setImages((previous) => {
+      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: previous.retained };
+      const loadedIds = [...new Set([...current.loadedIds, layerId])];
+      const failedRequiredIds = current.failedRequiredIds.filter((id) => id !== layerId);
+      const complete = metadata && characterPath && !requiredImageIds.some((id) => failedRequiredIds.includes(id)) && requiredImageIds.every((id) => loadedIds.includes(id));
+      return { ...current, loadedIds, failedRequiredIds, retained: complete ? {
+        garmentId: metadata.garmentId, name: metadata.name, characterPath,
+        layers: activeLayers.filter((layer) => loadedIds.includes(layer.layerId)), garmentFilter,
+      } : current.retained };
+    });
+  }
 
-  // Filter and sort active garment layers by renderOrder and layerVisibility
-  const activeLayers = (effectiveGarment?.layers || [])
-    .filter((layer) => {
-      if (layer.visible === false) return false;
-      if (layerVisibility && layerVisibility[layer.layerId] === false) return false;
-      return true;
-    })
-    .sort((a, b) => (a.renderOrder ?? 10) - (b.renderOrder ?? 10));
+  function imageFailed(layer: GarmentLayer | null) {
+    setImages((previous) => {
+      const current = previous.key === requestKey ? previous : { key: requestKey, loadedIds: [], failedAccessoryIds: [], failedRequiredIds: [], retained: previous.retained };
+      if (!layer?.isOptional) {
+        const failedId = layer?.layerId ?? "character";
+        return { ...current, loadedIds: current.loadedIds.filter((id) => id !== failedId), failedRequiredIds: [...new Set([...current.failedRequiredIds, failedId])] };
+      }
+      return { ...current, failedAccessoryIds: [...new Set([...current.failedAccessoryIds, layer.layerId])],
+        retained: current.retained && current.retained.garmentId === garmentId
+          ? { ...current.retained, layers: current.retained.layers.filter((item) => item.layerId !== layer.layerId) } : current.retained };
+    });
+  }
 
   return (
-    <div
-      className={`relative w-full aspect-[1024/1536] max-w-[540px] mx-auto select-none overflow-hidden rounded-2xl bg-gradient-to-b from-zinc-900/90 via-black to-zinc-950 border border-amber-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_rgba(217,119,6,0.08)] ${className}`}
-      data-testid="outfit-composer-container"
-    >
-      {/* Editorial Decorative Grid & Pedestal Glow */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px]" />
-      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-amber-900/20 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-red-600/10 blur-3xl pointer-events-none" />
-
-      {/* Top Editorial Corner Badges */}
-      <div className="absolute top-3 inset-x-3 flex items-center justify-between z-40 text-[10px] tracking-widest uppercase font-mono">
-        <span className="px-2.5 py-1 rounded-full bg-black/60 border border-white/10 text-zinc-300 backdrop-blur-md">
-          {character?.name || characterId}
-        </span>
-        {effectiveGarment && (
-          <span className="px-2.5 py-1 rounded-full bg-red-950/80 border border-red-500/40 text-red-200 backdrop-blur-md">
-            {effectiveGarment.name}
-          </span>
-        )}
-      </div>
-
-      {/* Character Base Layer */}
-      {character?.assetPath && (
-        <motion.img
-          key={`base-${character.characterId}`}
-          src={character.assetPath}
-          alt={character.name}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
-          data-testid="base-character-layer"
-        />
-      )}
-
-      {/* Garment Layers with Framer Motion transitions & Isolated Garment Color Filter */}
-      <div
-        className={`absolute inset-0 w-full h-full pointer-events-none transition-all duration-500 ${garmentFilterClassName}`}
-        data-testid="garment-layers-container"
-      >
-        <AnimatePresence mode="popLayout">
-          {activeLayers.map((layer) => (
-            <motion.img
-              key={`layer-${layer.layerId}-${layer.assetPath}`}
-              src={layer.assetPath}
-              alt={layer.name}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              style={{ zIndex: layer.renderOrder }}
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-              data-testid={`garment-layer-${layer.layerId}`}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* Loading Indicator */}
-      {(characterLoading || garmentLoading) && (
-        <div
-          className="absolute top-4 right-4 z-50 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-amber-500/30 text-[10px] font-mono text-amber-300 backdrop-blur-md"
-          data-testid="composer-loading"
-        >
-          <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          <span>Đang nạp layer...</span>
+    <div className={`relative w-full aspect-[1024/1536] max-w-[540px] mx-auto select-none overflow-hidden rounded-2xl bg-zinc-950 border border-amber-500/20 ${className}`} data-testid="outfit-composer-container" aria-busy={!ready && !error}>
+      {retained && (
+        <div className="absolute inset-0" role="img" aria-label={`Bản phối trước: ${retained.name}`} data-testid="retained-preview">
+          <Image src={retained.characterPath} alt="" fill unoptimized sizes="540px" className="object-contain" />
+          {retained.layers.map((layer) => <Image key={layer.assetPath} src={layer.assetPath} alt="" fill unoptimized sizes="540px" className="object-contain" style={{ zIndex: layer.renderOrder, filter: layer.layerId === "torso" ? retained.garmentFilter : undefined }} />)}
         </div>
       )}
-
-      {/* Graceful Error Notice for Missing Garment Metadata */}
-      {garmentId && garmentError && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 15 }}
-          className="absolute bottom-4 inset-x-4 z-50 rounded-xl border border-amber-500/30 bg-zinc-950/90 p-3.5 backdrop-blur-lg shadow-2xl"
-          data-testid="garment-error-notice"
-        >
-          <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold">
-              !
-            </div>
-            <div className="flex-1 text-xs">
-              <p className="font-semibold text-amber-200 tracking-wide">
-                Thông báo dữ liệu trang phục
-              </p>
-              <p className="mt-0.5 font-mono text-[11px] text-zinc-400 break-words">
-                {garmentError}
-              </p>
-              <p className="mt-1 text-[10px] text-zinc-500">
-                Fallback: Hệ thống vẫn hiển thị Base Character nguyên bản để đảm bảo trải nghiệm liên tục.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Graceful Warning Notice for Character Loading Fallback */}
-      {characterError && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 15 }}
-          className="absolute top-12 inset-x-4 z-50 rounded-xl border border-red-500/30 bg-zinc-950/90 p-3.5 backdrop-blur-lg shadow-2xl"
-          data-testid="character-error-notice"
-        >
-          <div className="flex items-start gap-2.5">
-            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400 text-xs font-bold">
-              !
-            </div>
-            <div className="flex-1 text-xs">
-              <p className="font-semibold text-red-200 tracking-wide">
-                Thông báo dữ liệu nhân vật
-              </p>
-              <p className="mt-0.5 font-mono text-[11px] text-zinc-400 break-words">
-                {characterError}
-              </p>
-              <p className="mt-1 text-[10px] text-zinc-500">
-                Fallback: Đang sử dụng hình ảnh base trực tiếp từ đường dẫn mặc định.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Bottom Layer Status & Technical Spec Badge */}
-      {showLayerBadge && (
-        <div className="absolute bottom-3 inset-x-3 flex items-center justify-between z-30 pointer-events-none text-[10px] text-zinc-400 font-mono">
-          <span className="px-2 py-0.5 rounded bg-black/60 border border-white/5 backdrop-blur-sm">
-            Canvas 1024×1536 · 2:3
-          </span>
-          <span className="px-2 py-0.5 rounded bg-black/60 border border-white/5 backdrop-blur-sm text-zinc-300">
-            {activeLayers.length > 0
-              ? `Layers active: 1 + ${activeLayers.length}`
-              : "Base layer only"}
-          </span>
+      <div className="absolute inset-0" style={{ visibility: ready ? "visible" : "hidden" }} aria-hidden={!ready}>
+        {characterPath && <Image key={`${requestKey}:character`} src={characterPath} alt="Nhân vật minh họa" fill unoptimized loading="eager" sizes="540px" onLoad={() => imageLoaded("character")} onError={() => imageFailed(null)} className="object-contain" data-testid="base-character-layer" />}
+        <div className="absolute inset-0 pointer-events-none" data-testid="garment-layers-container" data-garment-id={metadata?.garmentId}>
+          {renderableLayers.map((layer) => <MotionLayer key={layer.assetPath} layer={layer} visible={activeLayers.some((active) => active.layerId === layer.layerId)} filter={garmentFilter} reducedMotion={reducedMotion} stageReady={ready} requestKey={requestKey} onLoad={() => imageLoaded(layer.layerId)} onError={() => imageFailed(layer)} />)}
         </div>
-      )}
+      </div>
+      <div className="absolute inset-x-3 bottom-3 z-[70] rounded-lg bg-zinc-950/95 p-3 text-sm text-zinc-100" role="status" aria-live="polite">
+        {ready && frame.failedAccessoryIds.length === 0 && <p>{metadata?.name}</p>}
+        {!ready && !error && <p data-testid="composer-loading">Đang chuẩn bị trang phục…{retained ? ` Bản phối trước: ${retained.name}.` : ""}</p>}
+        {error && <div data-testid="garment-error-notice"><p>Chưa tải được trang phục.{retained ? ` Đang giữ bản phối trước: ${retained.name}.` : " Vui lòng thử lại."}</p><button type="button" className="mt-2 min-h-11 min-w-11 rounded-lg border border-zinc-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setRetry((value) => value + 1)}>Thử lại trang phục</button></div>}
+        {frame.failedAccessoryIds.length > 0 && <div><p>Chưa tải được phụ kiện. Các lớp trang phục bạn đang chọn vẫn được giữ nguyên.</p><button type="button" className="mt-2 min-h-11 min-w-11 rounded-lg border border-zinc-300 px-3 focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => setRetry((value) => value + 1)}>Thử lại phụ kiện</button></div>}
+      </div>
     </div>
   );
 }

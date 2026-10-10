@@ -1,0 +1,83 @@
+{
+  "garmentId": "ao_dai/red",
+  "name": "Áo Dài Đỏ Hoa Sen Hoàng Triều",
+  "characterId": "base_01",
+  "garmentType": "ao_dai",
+  "dynasty": "Nguyễn (1802 - 1945)",
+  "gender": "nu",
+  "description": "Áo dài truyền thống lụa đỏ thắm thêu hoa sen hoàng kim tinh xảo thời Nguyễn, kết hợp cùng mấn đội đầu gấm phụng và kiềng bạc cổ truyền.",
+  "historicalFact": "Trang phục áo dài Việt Nam thời Nguyễn kế thừa và cách tân từ áo ngũ thân lập lĩnh, thể hiện sự kín đáo, đoan trang và khí chất thanh nhã của người phụ nữ Việt.",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "renderOrder": 10,
+  "layers": [
+    {
+      "layerId": "pants",
+      "name": "Quần Lụa Trắng",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "assetPath": "/assets/garments/ao_dai/red/pants.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "torso",
+      "name": "Thân Áo Dài Hoa Sen",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "assetPath": "/assets/garments/ao_dai/red/torso.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "necklace",
+      "name": "Kiềng Bạc Chạm Hoa Sen",
+      "componentType": "accessory",
+      "renderOrder": 50,
+      "assetPath": "/assets/garments/ao_dai/red/necklace.png",
+      "visible": true,
+      "isOptional": true
+    },
+    {
+      "layerId": "headpiece",
+      "name": "Mấn Đội Đầu Hoàng Kim",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "assetPath": "/assets/garments/ao_dai/red/headpiece.png",
+      "visible": true,
+      "isOptional": true
+    }
+  ],
+  "components": [
+    {
+      "assetId": "ao_dai_red_pants",
+      "name": "Quần Lụa Trắng",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "filePath": "/assets/garments/ao_dai/red/pants.png"
+    },
+    {
+      "assetId": "ao_dai_red_torso",
+      "name": "Thân Áo Dài Hoa Sen",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "filePath": "/assets/garments/ao_dai/red/torso.png"
+    },
+    {
+      "assetId": "ao_dai_red_necklace",
+      "name": "Kiềng Bạc Cổ Truyền",
+      "componentType": "necklace",
+      "renderOrder": 50,
+      "filePath": "/assets/garments/ao_dai/red/necklace.png"
+    },
+    {
+      "assetId": "ao_dai_red_headpiece",
+      "name": "Mấn Đội Đầu Hoàng Gia",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "filePath": "/assets/garments/ao_dai/red/headpiece.png"
+    }
+  ]
+}

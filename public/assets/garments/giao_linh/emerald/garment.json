@@ -1,0 +1,83 @@
+{
+  "garmentId": "giao_linh/emerald",
+  "name": "Áo Giao Lĩnh Ngọc Lục Bảo (Đại Việt Cổ Phong)",
+  "characterId": "base_01",
+  "garmentType": "giao_linh",
+  "dynasty": "Triều Hậu Lê (1428 - 1789)",
+  "gender": "nu",
+  "description": "Áo Giao Lĩnh vạt chéo sắc ngọc lục bảo thêu hoa văn mây sóng thủy ba dát chỉ kim tuyến, phối cùng dải đại đái lụa hoàng kim thắt nơ trước eo, thường phiến xếp ly trắng thanh thoát và trâm cài hoa sen ngọc bích.",
+  "historicalFact": "Áo Giao Lĩnh (còn gọi là Giao Lãnh Y) là một trong những dạng thức trang phục cổ xưa và tôn quý bậc nhất của người Việt, phổ biến sâu rộng suốt thời Lý, Trần, Lê. Đặc trưng kinh điển là hai vạt áo chéo nhau trước ngực tạo thành cổ chữ V trang nhã, ống tay áo thụng rộng thanh cao cùng dải đại đái buông dài tôn vinh cốt cách tao nhã của bậc quý tộc Đại Việt.",
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "renderOrder": 10,
+  "layers": [
+    {
+      "layerId": "pants",
+      "name": "Thường Phiến Xếp Ly Trắng",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "assetPath": "/assets/garments/giao_linh/emerald/pants.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "torso",
+      "name": "Áo Giao Lĩnh Tay Thụng & Đại Đái",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "assetPath": "/assets/garments/giao_linh/emerald/torso.png",
+      "visible": true,
+      "isOptional": false
+    },
+    {
+      "layerId": "necklace",
+      "name": "Thẻ Bài Ngọc Bội Hoa Sen",
+      "componentType": "accessory",
+      "renderOrder": 50,
+      "assetPath": "/assets/garments/giao_linh/emerald/necklace.png",
+      "visible": true,
+      "isOptional": true
+    },
+    {
+      "layerId": "headpiece",
+      "name": "Trâm Cài Hoa Sen Ngọc Bích",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "assetPath": "/assets/garments/giao_linh/emerald/headpiece.png",
+      "visible": true,
+      "isOptional": true
+    }
+  ],
+  "components": [
+    {
+      "assetId": "giao_linh_pants",
+      "name": "Thường Phiến Xếp Ly Trắng",
+      "componentType": "pants",
+      "renderOrder": 25,
+      "filePath": "/assets/garments/giao_linh/emerald/pants.png"
+    },
+    {
+      "assetId": "giao_linh_torso",
+      "name": "Áo Giao Lĩnh Tay Thụng & Đại Đái",
+      "componentType": "front_panel",
+      "renderOrder": 40,
+      "filePath": "/assets/garments/giao_linh/emerald/torso.png"
+    },
+    {
+      "assetId": "giao_linh_necklace",
+      "name": "Thẻ Bài Ngọc Bội Hoa Sen",
+      "componentType": "necklace",
+      "renderOrder": 50,
+      "filePath": "/assets/garments/giao_linh/emerald/necklace.png"
+    },
+    {
+      "assetId": "giao_linh_headpiece",
+      "name": "Trâm Cài Hoa Sen Ngọc Bích",
+      "componentType": "headpiece",
+      "renderOrder": 60,
+      "filePath": "/assets/garments/giao_linh/emerald/headpiece.png"
+    }
+  ]
+}

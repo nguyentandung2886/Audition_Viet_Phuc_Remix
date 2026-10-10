@@ -1,27 +1,65 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
+:root{--ink:#20334a;--blue:#354d80;--porcelain:#f3f7fa;--jade:#356557;--brass:#b18a46}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#e8edf0;color:var(--ink);font-family:Arial,Helvetica,sans-serif}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.atelier-app{min-height:100svh;overflow:hidden}.site-header{height:76px;padding:0 clamp(22px,4.5vw,76px);display:flex;align-items:center;justify-content:space-between;position:relative;z-index:30;background:#f3f7fa;border-bottom:1px solid #d9e1e7}.brand{display:flex;align-items:center;gap:16px;border:0;background:none;color:var(--ink);padding:0}.brand-mark{display:grid;place-items:center;width:41px;height:41px;border:1px solid var(--ink);border-radius:50%;font-family:Georgia,serif;font-size:13px;letter-spacing:-2px}.brand-mark span{color:var(--brass);padding:0 2px}.brand-name{font-size:14px;font-weight:800;letter-spacing:.18em}.brand-name em{font-style:normal;color:var(--brass)}.top-nav{display:flex;align-items:center;gap:29px}.top-nav-label{font-size:10px;letter-spacing:.2em;color:#6f7e8b}.top-nav-button{border:0;background:none;color:var(--ink);font-size:12px;font-weight:700;min-height:44px}.occasion-trigger{border:1px solid #bfcbd4;padding:0 17px;border-radius:2px}.occasion-trigger span{margin-left:15px;font-size:18px}
+.occasion-menu{position:absolute;z-index:40;right:clamp(22px,4.5vw,76px);top:67px;width:min(360px,calc(100vw - 40px));padding:17px;background:#f6f8f8;border:1px solid #bdcbd4;box-shadow:0 18px 40px #20334a28}.occasion-menu p{font-size:10px;letter-spacing:.2em;color:#7c8a96}.occasion-menu button{width:100%;display:flex;justify-content:space-between;padding:14px 4px;border:0;border-bottom:1px solid #dce4e8;background:transparent;text-align:left;color:var(--ink);font-weight:700}
+.main-scene{position:relative;min-height:calc(100svh - 129px);isolation:isolate}.scene-art,.scene-tint,.scene-foreground{position:absolute;inset:0;pointer-events:none}.scene-art{z-index:-3;background-size:cover;background-position:center 55%;transform-origin:center}.scene-tint{z-index:-2;background:linear-gradient(90deg,#ecf3f4ed 0%,#eef3f3b5 37%,#eef3f385 75%,#eef3f3b3 100%)}.scene-foreground{z-index:5;background-size:cover;background-position:center;opacity:.65}.view-room .scene-tint,.view-result .scene-tint{background:linear-gradient(90deg,#dce6e8a8 0%,#e9eff0a0 54%,#f4f7f5fa 62%,#f4f7f5 100%)}
+.gallery-intro{position:relative;z-index:6;max-width:720px;margin:0 auto;padding:clamp(35px,5vh,65px) 20px 16px;text-align:center}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.25em;color:#567287}.eyebrow i{width:6px;height:6px;display:inline-block;border-radius:50%;background:var(--brass);vertical-align:middle;margin-right:10px}.gallery-intro h1,.style-panel h1{margin:13px 0 12px;font-family:Georgia,"Times New Roman",serif;font-weight:400;line-height:1.08;letter-spacing:-.045em}.gallery-intro h1{font-size:clamp(44px,5vw,80px)}.gallery-intro h1 em{font-style:italic;color:#4b6c86}.gallery-intro p{max-width:500px;margin:auto;font-size:15px;line-height:1.6;color:#476174}.occasion-chip{margin-top:13px;border:1px solid #b6c6d0;background:#f4f8f9bb;color:var(--ink);border-radius:30px;padding:8px 15px}
+.gallery-grid{position:relative;z-index:6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;width:min(1120px,calc(100% - 48px));margin:20px auto 0}.garment-card{position:relative;display:block;min-height:clamp(305px,38vh,430px);overflow:hidden;padding:0;text-align:left;border:1px solid #f7f9f9aa;background:linear-gradient(155deg,#e4eaedf0,#d7e0e4cc);box-shadow:0 14px 32px #27425725;color:var(--ink);transition:transform .36s ease,box-shadow .36s ease}.garment-card:nth-child(2){background:linear-gradient(155deg,#e5ebef,#d7e0e9)}.garment-card:nth-child(3){background:linear-gradient(155deg,#e7eeea,#d6e3de)}.garment-card:hover,.garment-card:focus-visible{transform:translateY(-7px);box-shadow:0 23px 44px #27425735}.card-index{position:absolute;z-index:2;top:18px;left:22px;color:#6c8190;font-size:11px;letter-spacing:.2em}.card-figure{position:absolute;inset:1% 12% 18%;background-size:contain;background-repeat:no-repeat;background-position:center;transition:transform .55s cubic-bezier(.2,.7,.2,1);filter:drop-shadow(0 15px 10px #2942572c)}.garment-card:hover .card-figure{transform:scale(1.06) translateY(-5px)}.card-content{position:absolute;bottom:0;left:0;right:0;padding:19px 22px 20px;background:linear-gradient(transparent,#f5f8f6e8 16%,#f5f8f6f5);display:flex;flex-direction:column}.card-caption,.card-link,.summary-kicker{font-size:10px;letter-spacing:.18em;font-weight:800;color:#668095}.card-content strong{margin:6px 0 13px;font-family:Georgia,serif;font-size:28px;font-weight:400}.card-link{color:var(--blue);letter-spacing:.04em;text-transform:none;font-size:12px}.card-link b{margin-left:9px;font-size:16px}.gallery-foot{position:relative;z-index:6;width:min(1120px,calc(100% - 48px));margin:24px auto 36px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;font-weight:700;color:#577183}
+.room-layout{position:relative;z-index:6;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,390px);min-height:calc(100svh - 129px)}.room-visual{min-height:680px;position:relative;display:flex;justify-content:center;align-items:center}.back-button{position:absolute;z-index:10;top:28px;left:clamp(25px,5vw,75px);border:1px solid #a6b8c2;background:#f4f8f2e8;color:var(--ink);min-height:44px;padding:0 17px;font-weight:700;font-size:12px}.back-button span{margin-left:8px}.room-number{position:absolute;top:38px;right:25px;font-size:10px;letter-spacing:.2em;font-weight:800;color:#597487}.character-stage{width:min(40vw,425px);height:min(77vh,640px);display:flex;align-items:center;justify-content:center}.atelier-composer{width:100%;max-width:none!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important}.atelier-composer [role="status"]{background:#f7f9f3ed!important;color:var(--ink)!important;border:1px solid #becbd1}.stage-caption{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:9px;letter-spacing:.2em;color:#5d7480;font-weight:800}
+.style-panel{position:relative;z-index:7;padding:42px 34px 36px;background:#f2f6f4f4;border-left:1px solid #e4eaeb;box-shadow:-15px 0 35px #20334a18}.style-panel h1{font-size:clamp(38px,3.1vw,52px)}.panel-lead{margin:0 0 26px;font-size:13px;line-height:1.7;color:#5d7080}.control-section{border-top:1px solid #d7e1e4;padding:20px 0}.section-heading{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}.section-heading span{font-size:10px;color:var(--brass);font-weight:800}.section-heading h2{margin:0;font-family:Georgia,serif;font-size:20px;font-weight:400}.garment-switch{display:flex;flex-wrap:wrap;gap:7px}.garment-switch button{border:1px solid #cbd7dc;min-height:39px;padding:0 10px;background:#fff9;color:var(--ink);font-size:11px}.garment-switch button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:white}.color-options{display:flex;flex-wrap:wrap;gap:8px}.color-option{display:flex;align-items:center;gap:10px;min-height:43px;padding:0 12px;border:1px solid var(--blue);background:white;color:var(--ink);font-size:12px}.color-option>span:last-child{margin-left:8px}.color-swatch{width:17px;height:17px;border-radius:50%;background:#8d3d50}.swatch-royal_blue{background:#354d80}.swatch-emerald{background:#356557}.accessory-options{display:grid;gap:7px}.accessory-options label{min-height:43px;display:flex;align-items:center;gap:10px;border:1px solid #d3dfe2;padding:8px 10px;background:#ffffffa6;font-size:11px;cursor:pointer}.accessory-options input{position:absolute;opacity:0;width:1px;height:1px}.accessory-check{display:grid;place-items:center;flex:none;width:19px;height:19px;border:1px solid #9daeb7;color:transparent}.accessory-options input:checked+.accessory-check{background:var(--jade);color:white;border-color:var(--jade)}.accessory-options label:focus-within{outline:3px solid var(--brass);outline-offset:2px}.primary-action{width:100%;min-height:51px;display:flex;align-items:center;justify-content:space-between;margin:6px 0 20px;padding:0 17px;background:var(--blue);border:1px solid var(--blue);color:white;font-size:13px;font-weight:700}.primary-action:hover{background:#20375e}.primary-action span{font-size:20px}.culture-note{border-left:2px solid var(--brass);padding:4px 0 4px 15px}.culture-note span{font-size:10px;letter-spacing:.17em;color:#8d764f;font-weight:800}.culture-note p{margin:7px 0 0;font-size:11px;line-height:1.6;color:#61717c}.result-summary{border-top:1px solid #d6e0e4;padding:25px 0}.result-summary strong{display:block;margin:9px 0 15px;font:32px Georgia,serif}.result-summary p{margin:9px 0;font-size:13px;color:#526b7a}
+.site-footer{min-height:53px;padding:0 clamp(22px,4.5vw,76px);display:flex;align-items:center;justify-content:space-between;gap:15px;background:var(--ink);color:#d7e1e5;font-size:10px;letter-spacing:.13em}.site-footer span:nth-child(2){letter-spacing:.04em}
+@media(max-width:900px){.top-nav-label{display:none}.room-layout{grid-template-columns:1fr}.room-visual{min-height:540px}.character-stage{width:min(45vw,350px);height:510px}.style-panel{border-left:0;border-top:1px solid #dce4e6;display:grid;grid-template-columns:1fr 1fr;gap:0 22px}.style-panel>.eyebrow,.style-panel>h1,.panel-lead,.primary-action,.culture-note{grid-column:1/-1}}
+@media(max-width:640px){.site-header{height:64px;padding:0 15px}.brand{gap:8px}.brand-mark{width:34px;height:34px;font-size:11px}.brand-name{font-size:10px;letter-spacing:.1em}.top-nav{gap:6px}.top-nav-button{font-size:10px;padding:0 7px}.occasion-trigger{padding:0 7px}.occasion-trigger span{margin-left:4px}.main-scene{min-height:calc(100svh - 110px)}.gallery-intro{padding-top:32px}.gallery-intro h1{font-size:43px}.gallery-intro p{font-size:13px}.gallery-grid{grid-template-columns:1fr;width:calc(100% - 28px);margin-top:14px;gap:10px}.garment-card{min-height:180px}.card-figure{inset:0 40% 0 3%;background-position:center}.card-content{inset:0 0 0 45%;justify-content:center;background:linear-gradient(90deg,transparent,#f5f8f6d9 15%,#f5f8f6ef);padding:12px}.card-content strong{font-size:23px;margin:6px 0}.card-caption{font-size:8px}.gallery-foot{width:calc(100% - 28px);margin:18px auto 25px;font-size:8px}.gallery-foot span:last-child{display:none}.room-visual{min-height:520px}.character-stage{width:min(72vw,330px);height:460px}.room-number{top:82px;right:16px}.back-button{top:18px;left:15px}.style-panel{display:block;padding:30px 22px}.scene-art{background-position:center}.view-room .scene-tint,.view-result .scene-tint{background:#e9f0f1a3}.site-footer{min-height:46px;padding:0 15px;font-size:8px}.site-footer span:nth-child(2){display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.color-option[aria-pressed="true"]{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}.color-option[aria-pressed="false"]{border-color:#cbd7dc}.atelier-composer img[data-testid^="garment-layer-"]{animation:layer-appear .36s ease both}@keyframes layer-appear{from{opacity:.25}to{opacity:1}}
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Runtime garment color presets */
+.color-option{transition:transform .16s ease,border-color .2s ease,box-shadow .2s ease}
+.color-option:active{transform:scale(.97)}
+.color-swatch{background:linear-gradient(135deg,#963e50,#d99076);box-shadow:inset 0 0 0 1px #fff8;transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+.color-warm .color-swatch{background:linear-gradient(135deg,#a85843,#d9a35d)}
+.color-cool .color-swatch{background:linear-gradient(135deg,#466d82,#789aa4)}
+.color-note{margin:10px 0 0;color:#526875;font-size:12px;line-height:1.5}
+.atelier-composer img[data-testid^="garment-layer-"]{transition:filter .48s cubic-bezier(.4,0,.2,1)}
+.layer-options{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+.layer-options label{background:#edf3f2;border-color:#c6d5d7;font-weight:700}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Cinematic room and interaction motion */
+.scene-transition{position:absolute;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
+.scene-plate{position:absolute;inset:0;transform-origin:50% 50%;backface-visibility:hidden}
+.scene-plate .scene-art,.scene-plate .scene-foreground{position:absolute;inset:-3%;background-size:cover;background-position:center 55%;pointer-events:none}
+.scene-plate .scene-art{z-index:0}
+.scene-plate .scene-foreground{z-index:1;background-position:center}
+.garment-motion-layer>img{animation:none!important;transition:filter .48s cubic-bezier(.4,0,.2,1)}
+.garment-switch button,.top-nav-button,.back-button,.occasion-menu button,.primary-action,.accessory-options label{position:relative;isolation:isolate;overflow:hidden;transition:transform .14s ease,color .26s ease,border-color .26s ease,background-color .26s ease,box-shadow .26s ease}
+.back-button{position:absolute}
+.garment-switch button::before{content:"";position:absolute;z-index:-1;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+.garment-switch button[aria-pressed="true"]{animation:option-settle .26s ease-out}
+.color-option[aria-pressed="true"] .color-swatch{animation:swatch-select .4s cubic-bezier(.2,.8,.2,1)}
+.accessory-check{transform:scale(.9);transition:transform .18s ease,background-color .18s ease,color .14s ease}
+.accessory-options input:checked+.accessory-check{animation:check-pop .26s cubic-bezier(.2,.8,.2,1)}
+.primary-action span,.back-button span,.occasion-menu button span{transition:transform .26s cubic-bezier(.2,.7,.2,1)}
+@keyframes option-settle{0%{transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes swatch-select{0%{transform:scale(.78) rotate(-16deg);box-shadow:0 0 0 0 #45647f66}60%{transform:scale(1.12) rotate(5deg);box-shadow:0 0 0 6px #45647f18}100%{transform:scale(1) rotate(0);box-shadow:inset 0 0 0 1px #fff8}}
+@keyframes check-pop{0%{transform:scale(.72)}65%{transform:scale(1.12)}100%{transform:scale(1)}}
+@media(hover:hover){
+  .garment-card:hover{transform:translateY(-8px) rotate(.55deg);box-shadow:0 27px 48px #2742573d}
+  .garment-card:nth-child(even):hover{transform:translateY(-8px) rotate(-.55deg)}
+  .garment-switch button:hover::before{transform:scaleX(1)}
+  .garment-switch button:hover{color:#fff;border-color:var(--ink);transform:translateY(-2px)}
+  .color-option:hover{transform:translateY(-2px);box-shadow:0 8px 18px #2742571c}
+  .color-option:hover .color-swatch{transform:scale(1.12) rotate(8deg)}
+  .accessory-options label:hover{transform:translateX(2px);border-color:var(--jade);box-shadow:0 5px 14px #27425712}
+  .accessory-options label:hover .accessory-check{transform:scale(1.06)}
+  .primary-action:hover{transform:translateY(-2px);box-shadow:0 12px 22px #20375e28}
+  .primary-action:hover span{transform:translate(3px,-3px)}
+  .back-button:hover{transform:translateX(-3px);border-color:var(--ink)}
+  .back-button:hover span{transform:translateX(-2px)}
+  .top-nav-button:hover{color:var(--blue);transform:translateY(-1px)}
+  .occasion-menu button:hover{transform:translateX(4px);color:var(--blue)}
+  .occasion-menu button:hover span{transform:translate(3px,-3px)}
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+.primary-action:active,.back-button:active,.garment-switch button:active,.color-option:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.scene-plate,.garment-motion-layer{transform:none!important}.garment-switch button[aria-pressed="true"],.color-option[aria-pressed="true"] .color-swatch,.accessory-options input:checked+.accessory-check{animation:none!important}}
