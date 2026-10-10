@@ -90,3 +90,41 @@ it("uses catalog options and publishes only pending cultural context", async () 
   expect(screen.queryByRole("button", { name: /Base/ })).toBeNull();
   expect(screen.queryByRole("button", { name: /Thân Áo|Quần/ })).toBeNull();
 });
+
+it("starts fresh image state when returning to a garment before the intermediate garment loads", async () => {
+  const blue = new Promise<Response>(() => {});
+  vi.stubGlobal("fetch", (path: string) => {
+    if (path.includes("characters")) return Promise.resolve(reply(character));
+    if (path.includes("nhat_binh")) return blue;
+    return Promise.resolve(reply(json("ao_dai/red")));
+  });
+  const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" />);
+  await finishImages();
+  fireEvent.error(screen.getByTestId("garment-layer-necklace"));
+  expect(screen.queryByTestId("garment-layer-necklace")).toBeNull();
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="nhat_binh/royal_blue" />);
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" />);
+
+  // Reusing loaded flags would reveal this returned selection before its images load.
+  expect(screen.getByTestId("outfit-composer-container").getAttribute("aria-busy")).toBe("true");
+  expect(screen.queryByRole("button", { name: "Thử lại phụ kiện" })).toBeNull();
+  await screen.findByTestId("garment-layer-necklace");
+  await finishImages();
+  expect(screen.getByTestId("garment-layer-necklace").getAttribute("src")).toContain("ao_dai/red");
+});
+
+it("retains the last visible complete outfit after an accessory is deselected", async () => {
+  const blue = new Promise<Response>(() => {});
+  vi.stubGlobal("fetch", (path: string) => path.includes("nhat_binh") ? blue : Promise.resolve(reply(path.includes("characters") ? character : json("ao_dai/red"))));
+  const view = render(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ necklace: true, headpiece: true }} />);
+  await finishImages();
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="ao_dai/red" layerVisibility={{ necklace: true, headpiece: false }} />);
+  expect(screen.queryByTestId("garment-layer-headpiece")).toBeNull();
+  view.rerender(<OutfitComposer characterId="base_01" garmentId="nhat_binh/royal_blue" />);
+
+  const sources = Array.from(screen.getByTestId("retained-preview").querySelectorAll("img"), (image) => image.getAttribute("src"));
+  expect(sources.some((src) => src?.endsWith("/headpiece.png"))).toBe(false);
+  expect(sources).toHaveLength(4);
+  expect(sources.some((src) => src?.endsWith("/pants.png"))).toBe(true);
+  expect(sources.some((src) => src?.endsWith("/torso.png"))).toBe(true);
+});

@@ -26,7 +26,13 @@ interface ImageState {
 
 export default function OutfitComposer({ characterId, garmentId, layerVisibility, className = "", onGarmentLoaded, onCharacterLoaded }: OutfitComposerProps) {
   const [retry, setRetry] = useState(0);
-  const requestKey = `${characterId}:${garmentId}:${retry}`;
+  const selectionKey = `${characterId}:${garmentId}:${retry}`;
+  const [request, setRequest] = useState({ selectionKey, generation: 0 });
+  // Adjust during render so returning to an earlier ID cannot briefly restore its frame.
+  if (request.selectionKey !== selectionKey) {
+    setRequest({ selectionKey, generation: request.generation + 1 });
+  }
+  const requestKey = `${selectionKey}:${request.generation}`;
   const [loaded, setLoaded] = useState<{ key: string; metadata: GarmentMetadata | null; error: boolean } | null>(null);
   const [character, setCharacter] = useState<CharacterMetadata | null>(null);
   const [images, setImages] = useState<ImageState>({ key: "", loadedIds: [], failedAccessoryIds: [], error: false, retained: null });
@@ -91,6 +97,16 @@ export default function OutfitComposer({ characterId, garmentId, layerVisibility
   const ready = Boolean(metadata && characterPath && !frame.error && ["character", "pants", "torso"].every((id) => frame.loadedIds.includes(id)));
   const error = (loaded?.key === requestKey && loaded.error) || frame.error || characterId !== "base_01";
   const retained = !ready && images.retained?.characterPath === characterPath ? images.retained : null;
+
+  if (ready && metadata && characterPath) {
+    const completeLayers = activeLayers.filter((layer) => frame.loadedIds.includes(layer.layerId));
+    const snapshot = images.retained;
+    if (!snapshot || snapshot.garmentId !== metadata.garmentId || snapshot.characterPath !== characterPath ||
+      snapshot.layers.length !== completeLayers.length || snapshot.layers.some((layer, index) => layer !== completeLayers[index])) {
+      // Visibility changes have no image event; remember the latest complete visible outfit.
+      setImages({ ...images, retained: { garmentId: metadata.garmentId, name: metadata.name, characterPath, layers: completeLayers } });
+    }
+  }
 
   function imageLoaded(layerId: string) {
     setImages((previous) => {
